@@ -13,6 +13,8 @@ import AreaMothers from './pages/MOHAdmin/AreaMothers';
 import HospitalDashboard from './pages/HospitalAdmin/HospitalDashboard';
 import SearchMother from './pages/HospitalAdmin/SearchMother';
 import Admissions from './pages/HospitalAdmin/Admissions';
+import Reports from './pages/HospitalAdmin/Reports';
+
 
 
 function App() {
@@ -38,7 +40,7 @@ function App() {
         <Route path="/hospital-admin/dashboard" element={<HospitalDashboard />} />
         <Route path="/hospital-admin/admissions" element={<Admissions />} />
         <Route path="/hospital-admin/search-mother" element={<SearchMother />} />
-        
+        <Route path="/hospital-admin/reports" element={<Reports />} />
         
 
         {/* වෙබ් අඩවියට පිවිසෙන ඕනෑම කෙනෙක්ව ස්වයංක්‍රීයව Login පිටුවට යොමු කරයි */}

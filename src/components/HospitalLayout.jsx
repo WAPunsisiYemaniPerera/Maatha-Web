@@ -64,6 +64,12 @@ const HospitalLayout = ({ children }) => {
             <div className="text-sm font-medium">මව්වරුන් සෙවීම</div>
             <div className="text-[10px] font-bold opacity-70 uppercase tracking-wide">Search Patients</div>
           </Link>
+
+          {/* අලුතින් එක් කළ ලින්ක්ස් */}
+          <Link to="/hospital-admin/reports" className={`block p-3 rounded-lg transition-all ${isActive('/hospital-admin/reports')}`}>
+            <div className="text-sm font-medium">වෛද්‍ය වාර්තා</div>
+            <div className="text-[10px] font-bold opacity-70 uppercase tracking-wide">Medical Reports</div>
+          </Link>
         </nav>
 
         <div className="p-4 border-t border-slate-800">
