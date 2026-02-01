@@ -49,9 +49,17 @@ const Login = () => {
         
         {/* Logo/Header Section */}
         <div className="text-center mb-10">
-          <div className="bg-blue-600 w-16 h-16 rounded-2xl mx-auto flex items-center justify-center shadow-lg shadow-blue-500/50 mb-4 rotate-3">
-            <span className="text-white text-3xl font-black italic">M</span>
+          <div className="relative w-20 h-20 mx-auto mb-6">
+            <div className="absolute inset-0 bg-blue-600/20 rounded-2xl rotate-6 scale-110"></div>
+            <div className="relative w-full h-full bg-white rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/20 border border-slate-100 overflow-hidden transform transition-transform hover:rotate-0 -rotate-3">
+              <img 
+                src="/logo512.png" 
+                alt="Maatha Logo" 
+                className="w-25 h-25 object-contain"
+              />
+            </div>
           </div>
+          
           <h2 className="text-3xl font-black text-slate-800 tracking-tighter">
             MAATHA <span className="text-blue-600">PORTAL</span>
           </h2>
