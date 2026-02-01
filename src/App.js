@@ -11,6 +11,7 @@ import AddMidwife from './pages/MOHAdmin/AddMidwife';
 import ManageMidwivesMOH from './pages/MOHAdmin/ManageMidwives';
 import AreaMothers from './pages/MOHAdmin/AreaMothers';
 import HospitalDashboard from './pages/HospitalAdmin/HospitalDashboard';
+import SearchMother from './pages/HospitalAdmin/SearchMother';
 
 
 function App() {
@@ -34,6 +35,8 @@ function App() {
 
         {/* Hospital Admin Routes */}
         <Route path="/hospital-admin/dashboard" element={<HospitalDashboard />} />
+        <Route path="/hospital-admin/search-mother" element={<SearchMother />} />
+        
         
 
         {/* වෙබ් අඩවියට පිවිසෙන ඕනෑම කෙනෙක්ව ස්වයංක්‍රීයව Login පිටුවට යොමු කරයි */}
