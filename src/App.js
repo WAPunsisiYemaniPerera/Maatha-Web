@@ -12,6 +12,7 @@ import ManageMidwivesMOH from './pages/MOHAdmin/ManageMidwives';
 import AreaMothers from './pages/MOHAdmin/AreaMothers';
 import HospitalDashboard from './pages/HospitalAdmin/HospitalDashboard';
 import SearchMother from './pages/HospitalAdmin/SearchMother';
+import Admissions from './pages/HospitalAdmin/Admissions';
 
 
 function App() {
@@ -35,6 +36,7 @@ function App() {
 
         {/* Hospital Admin Routes */}
         <Route path="/hospital-admin/dashboard" element={<HospitalDashboard />} />
+        <Route path="/hospital-admin/admissions" element={<Admissions />} />
         <Route path="/hospital-admin/search-mother" element={<SearchMother />} />
         
         
