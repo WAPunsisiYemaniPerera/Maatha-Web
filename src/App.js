@@ -10,6 +10,8 @@ import MOHDashboard from './pages/MOHAdmin/MOHDashboard';
 import AddMidwife from './pages/MOHAdmin/AddMidwife';
 import ManageMidwivesMOH from './pages/MOHAdmin/ManageMidwives';
 import AreaMothers from './pages/MOHAdmin/AreaMothers';
+import HospitalDashboard from './pages/HospitalAdmin/HospitalDashboard';
+
 
 function App() {
   return (
@@ -29,6 +31,9 @@ function App() {
         <Route path="/moh-admin/add-midwife" element={<AddMidwife />} />
         <Route path="/moh-admin/manage-midwives" element={<ManageMidwivesMOH />} />
         <Route path="/moh-admin/area-mothers" element={<AreaMothers />} />
+
+        {/* Hospital Admin Routes */}
+        <Route path="/hospital-admin/dashboard" element={<HospitalDashboard />} />
         
 
         {/* වෙබ් අඩවියට පිවිසෙන ඕනෑම කෙනෙක්ව ස්වයංක්‍රීයව Login පිටුවට යොමු කරයි */}
