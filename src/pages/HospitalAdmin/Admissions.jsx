@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { db } from '../../firebase/config';
 import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 import HospitalLayout from '../../components/HospitalLayout';
+import { Link } from 'react-router-dom';
 
 const Admissions = () => {
   const [admittedMothers, setAdmittedMothers] = useState([]);
@@ -142,9 +143,12 @@ const Admissions = () => {
                   </td>
                   <td className="p-5 text-right">
                     <div className="flex justify-end space-x-2">
-                      <button className="text-[10px] font-black uppercase text-indigo-600 hover:underline px-3 py-1">
-                        View Records
-                      </button>
+                      <Link 
+  to={`/hospital-admin/update-clinical/${mother.id}`}
+  className="text-[10px] font-black uppercase text-indigo-600 hover:underline px-3 py-1"
+>
+  View Records
+</Link>
                       <button 
                         onClick={() => setTransferId(mother.id)}
                         className="bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase px-4 py-1.5 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-sm"

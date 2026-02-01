@@ -1,21 +1,26 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
+
+// Super Admin Pages
 import Dashboard from './pages/SuperAdmin/Dashboard';
 import AddMOHAdmin from './pages/SuperAdmin/AddMOHAdmin';
 import AddHospitalAdmin from './pages/SuperAdmin/AddHospitalAdmin';
 import ManageMidwives from './pages/SuperAdmin/ManageMidwives';
 import ManageMothers from './pages/SuperAdmin/ManageMothers';
+
+// MOH Admin Pages
 import MOHDashboard from './pages/MOHAdmin/MOHDashboard';
 import AddMidwife from './pages/MOHAdmin/AddMidwife';
 import ManageMidwivesMOH from './pages/MOHAdmin/ManageMidwives';
 import AreaMothers from './pages/MOHAdmin/AreaMothers';
+
+// Hospital Admin Pages
 import HospitalDashboard from './pages/HospitalAdmin/HospitalDashboard';
 import SearchMother from './pages/HospitalAdmin/SearchMother';
 import Admissions from './pages/HospitalAdmin/Admissions';
 import Reports from './pages/HospitalAdmin/Reports';
-
-
+import UpdateClinical from './pages/HospitalAdmin/UpdateClinical'; // අලුතින් එක් කළා
 
 function App() {
   return (
@@ -41,9 +46,9 @@ function App() {
         <Route path="/hospital-admin/admissions" element={<Admissions />} />
         <Route path="/hospital-admin/search-mother" element={<SearchMother />} />
         <Route path="/hospital-admin/reports" element={<Reports />} />
-        
+        {/* from mother's id  */}
+        <Route path="/hospital-admin/update-clinical/:id" element={<UpdateClinical />} />
 
-        {/* වෙබ් අඩවියට පිවිසෙන ඕනෑම කෙනෙක්ව ස්වයංක්‍රීයව Login පිටුවට යොමු කරයි */}
         <Route path="/" element={<Navigate to="/login" />} />
       </Routes>
     </Router>
