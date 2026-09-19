@@ -16,7 +16,7 @@ const AddHospitalAdmin = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [editingId, setEditingId] = useState(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(null); // ඉවත් කිරීමට අවශ්‍ය ID එක තබා ගැනීමට
+  const [showDeleteModal, setShowDeleteModal] = useState(null); 
 
   const fetchHospitalAdmins = async () => {
     try {
@@ -73,7 +73,7 @@ const AddHospitalAdmin = () => {
       setFormData({ name: '', hospitalName: '', district: '', email: '', password: '' });
       setEditingId(null);
       fetchHospitalAdmins();
-      // තත්පර 3කට පසු පණිවිඩය ඉවත් කිරීම
+      
       setTimeout(() => setMessage(''), 3000);
 
     } catch (error) {
@@ -200,7 +200,7 @@ const AddHospitalAdmin = () => {
           </form>
         </div>
 
-        {/* ලැයිස්තුව පෙන්වන Table එක */}
+        
         <div className="bg-white p-8 rounded-lg shadow-md border-t-4 border-slate-700">
           <div className="mb-6">
             <h2 className="text-xl font-bold text-gray-800">දැනට සිටින රෝහල් පාලකවරුන්</h2>

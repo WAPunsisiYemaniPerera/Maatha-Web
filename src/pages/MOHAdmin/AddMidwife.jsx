@@ -11,7 +11,7 @@ const AddMidwife = () => {
     phone: '',
     email: '',
     employeeId: '',
-    mohOffice: 'Colombo', // මෙය ලොග් වී සිටින පාලකයාගේ ප්‍රදේශය අනුව ස්වයංක්‍රීයව විය යුතුය
+    mohOffice: 'Colombo', 
     serviceArea: '',
     gnDivisions: '',
     password: ''

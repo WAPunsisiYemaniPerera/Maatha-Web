@@ -5,11 +5,11 @@ import HospitalLayout from '../../components/HospitalLayout';
 
 const HospitalDashboard = () => {
   const [stats, setStats] = useState({ admitted: 0, highRisk: 0 });
-  const hospitalName = "General Hospital Colombo"; // පසුව Auth හරහා ලබාගත හැක
+  const hospitalName = "General Hospital Colombo"; 
 
   useEffect(() => {
     const fetchStats = async () => {
-      // මෙහිදී රෝහලට ඇතුළත් වූ (Admitted) මව්වරුන් පමණක් පෙරා ගත හැක
+      
       const q = query(collection(db, "mothers"), where("hospitalName", "==", hospitalName));
       const snap = await getDocs(q);
       const highRisk = snap.docs.filter(d => d.data().riskStatus === 'High-Risk').length;

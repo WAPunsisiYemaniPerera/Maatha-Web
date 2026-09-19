@@ -11,8 +11,8 @@ const Admissions = () => {
   const [transferId, setTransferId] = useState(null);
   const [newHospital, setNewHospital] = useState('');
   
-  const hospitalName = "General Hospital Colombo"; // පසුව Auth හරහා ලබාගත හැක
-
+  const hospitalName = "General Hospital Colombo"; 
+  
   const fetchAdmissions = async () => {
     setLoading(true);
     try {

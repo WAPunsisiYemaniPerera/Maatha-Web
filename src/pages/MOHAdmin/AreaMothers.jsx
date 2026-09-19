@@ -9,7 +9,7 @@ const AreaMothers = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState({ risk: 'All', midwife: 'All' });
   
-  const mohArea = "Colombo"; // පසුව Auth හරහා ලබාගත හැක
+  const mohArea = "Colombo"; 
 
   useEffect(() => {
     const fetchMothers = async () => {
@@ -28,7 +28,7 @@ const AreaMothers = () => {
     fetchMothers();
   }, [mohArea]);
 
-  // දත්ත පෙරීම (Filtering Logic)
+  
   useEffect(() => {
     let result = mothers;
     if (filter.risk !== 'All') {
@@ -71,7 +71,7 @@ const AreaMothers = () => {
           </select>
         </div>
         
-        {/* Midwife Filter - මෙහිදී Midwives ලැයිස්තුව Dynamic ලෙස ගත හැක */}
+        {/* Midwife Filter */}
         <div className="flex items-center space-x-2">
           <span className="text-[10px] font-black text-gray-400 uppercase">නිලධාරිනිය (By Midwife):</span>
           <select 

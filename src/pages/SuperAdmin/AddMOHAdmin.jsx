@@ -53,7 +53,7 @@ const AddMOHAdmin = () => {
       setFormData({ name: '', mohArea: '', district: '', email: '', password: '' });
       setEditingId(null);
       fetchAdmins();
-      // තත්පර 3කට පසු පණිවිඩය ඉවත් කිරීම
+      
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       setMessage("දෝෂයක් සිදු විය ");
@@ -114,7 +114,7 @@ const AddMOHAdmin = () => {
       )}
 
       <div className="max-w-4xl mx-auto space-y-8 transition-all duration-500">
-        {/* Form එක */}
+        {/* Form */}
         <div className="bg-white p-8 rounded-lg shadow-md border-t-4 border-blue-600">
           <div className="mb-6 border-b pb-2">
             <h2 className="text-2xl font-bold text-gray-800">
@@ -151,7 +151,7 @@ const AddMOHAdmin = () => {
           </form>
         </div>
 
-        {/* ලැයිස්තුව (Table) */}
+        
         <div className="bg-white p-8 rounded-lg shadow-md border-t-4 border-slate-700">
           <div className="mb-6">
             <h2 className="text-xl font-bold text-gray-800">දැනට සිටින MOH පාලකවරුන්</h2>

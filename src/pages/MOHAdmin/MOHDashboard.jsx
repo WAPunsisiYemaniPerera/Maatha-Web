@@ -6,7 +6,7 @@ import MOHLayout from '../../components/MOHLayout';
 const MOHDashboard = () => {
   const [counts, setCounts] = useState({ midwives: 0, mothers: 0, highRisk: 0 });
   const [currentTime, setCurrentTime] = useState(new Date());
-  const mohArea = "Colombo"; // ලොග් වී සිටින Admin ගේ ප්‍රදේශය
+  const mohArea = "Colombo"; 
 
   useEffect(() => {
     const fetchStats = async () => {
