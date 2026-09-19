@@ -255,3 +255,76 @@ export const safeRenderText = (val, fallback = '—') => {
   }
   return String(val);
 };
+
+/**
+ * Universal High-Risk Evaluator
+ * Checks all possible field variations, boolean flags, Sinhala/English text and casing
+ */
+export const isHighRiskMother = (mother) => {
+  if (!mother) return false;
+  if (typeof mother !== 'object') {
+    const s = String(mother).trim().toLowerCase();
+    return s.includes('high') || s.includes('critical') || s.includes('alert') || s.includes('අධි');
+  }
+
+  // Check boolean flags
+  if (mother.isHighRisk === true || mother.isHighRisk === 'true' || mother.isHighRisk === 1 || mother.isHighRisk === 'yes' || mother.isHighRisk === 'Yes') {
+    return true;
+  }
+  if (mother.highRisk === true || mother.highRisk === 'true' || mother.highRisk === 1) {
+    return true;
+  }
+
+  // Check all possible field names where risk might be stored
+  const candidates = [
+    mother.riskStatus,
+    mother.risk,
+    mother.riskLevel,
+    mother.riskCategory,
+    mother.risk_status,
+    mother.risk_level,
+    mother.status,
+    mother.clinicalRisk
+  ];
+
+  for (const cand of candidates) {
+    if (cand !== null && cand !== undefined && cand !== '') {
+      const s = String(cand).trim().toLowerCase();
+      if (
+        s.includes('high') ||
+        s.includes('critical') ||
+        s.includes('alert') ||
+        s.includes('severe') ||
+        s.includes('අධි') ||
+        s === 'high-risk' ||
+        s === 'high risk' ||
+        s === 'high'
+      ) {
+        return true;
+      }
+    }
+  }
+
+  // Also check if risk notes indicate high risk
+  const notes = String(mother.notes || mother.riskNotes || mother.riskReason || '').toLowerCase();
+  if (notes.includes('high risk') || notes.includes('high-risk') || notes.includes('අධි අවදානම්')) {
+    return true;
+  }
+
+  return false;
+};
+
+/**
+ * Normalizes risk status to standard 'High-Risk' or 'Normal'
+ */
+export const normalizeRiskStatus = (mother) => {
+  if (isHighRiskMother(mother)) {
+    return 'High-Risk';
+  }
+  const raw = String(mother?.riskStatus || mother?.risk || mother?.riskLevel || '').trim();
+  if (raw && !raw.toLowerCase().includes('normal') && !raw.toLowerCase().includes('low') && raw !== '—' && raw !== '') {
+    return raw;
+  }
+  return 'Normal';
+};
+

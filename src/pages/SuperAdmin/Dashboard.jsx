@@ -3,8 +3,8 @@ import { db } from '../../firebase/config';
 import { collection, getDocs } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
-import { findDistrictByMohArea } from '../../data/sriLankaLocations';
-import { safeRenderText } from '../../utils/securityValidators';
+import { DISTRICTS, findDistrictByMohArea } from '../../data/sriLankaLocations';
+import { formatDisplayDate, safeRenderText, isHighRiskMother, normalizeRiskStatus } from '../../utils/securityValidators';
 
 const Dashboard = () => {
   const [counts, setCounts] = useState({
@@ -19,6 +19,7 @@ const Dashboard = () => {
   const [districtData, setDistrictData] = useState([]);
   const [recentHighRisk, setRecentHighRisk] = useState([]);
   const [recentAdmins, setRecentAdmins] = useState([]);
+  const [trimesterData, setTrimesterData] = useState({ first: 0, second: 0, third: 0 });
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -30,12 +31,14 @@ const Dashboard = () => {
         const mothersSnap = await getDocs(collection(db, "mothers"));
         const mothersList = mothersSnap.docs.map(d => {
           const data = d.data();
+          const isHigh = isHighRiskMother(data);
           return {
             id: d.id,
             ...data,
             fullName: safeRenderText(data.fullName, ''),
             nic: safeRenderText(data.nic, ''),
-            riskStatus: safeRenderText(data.riskStatus, 'Normal'),
+            riskStatus: isHigh ? 'High-Risk' : normalizeRiskStatus(data),
+            isHighRisk: isHigh,
             district: safeRenderText(data.district, ''),
             mohArea: safeRenderText(data.mohArea, '')
           };
@@ -76,8 +79,8 @@ const Dashboard = () => {
         const midList = midSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
         // Risk Counts
-        const highRiskMothers = mothersList.filter(m => m.riskStatus === 'High-Risk');
-        const normalRiskMothers = mothersList.filter(m => m.riskStatus !== 'High-Risk');
+        const highRiskMothers = mothersList.filter(m => isHighRiskMother(m) || m.riskStatus === 'High-Risk');
+        const normalRiskMothers = mothersList.filter(m => !isHighRiskMother(m) && m.riskStatus !== 'High-Risk');
 
         setCounts({
           mothers: mothersList.length,

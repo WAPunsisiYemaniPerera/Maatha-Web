@@ -3,7 +3,7 @@ import { db } from '../../firebase/config';
 import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore';
 import AdminLayout from '../../components/AdminLayout';
 import { DISTRICTS, getMohAreas, findDistrictByMohArea } from '../../data/sriLankaLocations';
-import { formatDisplayDate, safeRenderText } from '../../utils/securityValidators';
+import { formatDisplayDate, safeRenderText, isHighRiskMother, normalizeRiskStatus } from '../../utils/securityValidators';
 
 const ManageMothers = () => {
   const [mothers, setMothers] = useState([]);
@@ -24,6 +24,7 @@ const ManageMothers = () => {
       const querySnapshot = await getDocs(collection(db, "mothers"));
       const mothersList = querySnapshot.docs.map(d => {
         const data = d.data();
+        const isHigh = isHighRiskMother(data);
         return {
           id: d.id,
           ...data,
@@ -38,8 +39,9 @@ const ManageMothers = () => {
           serviceArea: safeRenderText(data.serviceArea || data.phmArea, ''),
           midwifeName: safeRenderText(data.midwifeName, ''),
           hospitalName: safeRenderText(data.hospitalName, ''),
-          riskStatus: safeRenderText(data.riskStatus, 'Normal'),
-          notes: safeRenderText(data.notes || data.riskNotes, ''),
+          riskStatus: isHigh ? 'High-Risk' : normalizeRiskStatus(data),
+          isHighRisk: isHigh,
+          notes: safeRenderText(data.notes || data.riskNotes || data.riskReason, ''),
           edd: formatDisplayDate(data.edd, 'නොදක්වා ඇත'),
           gestationalAge: safeRenderText(data.gestationalAge || data.weeks, ''),
           age: safeRenderText(data.age, '')
@@ -100,7 +102,7 @@ const ManageMothers = () => {
   // KPI Calculations
   const stats = useMemo(() => {
     const total = mothers.length;
-    const highRisk = mothers.filter(m => m.riskStatus === 'High-Risk').length;
+    const highRisk = mothers.filter(m => isHighRiskMother(m) || m.riskStatus === 'High-Risk').length;
     const normal = total - highRisk;
     const highRiskPercent = total > 0 ? Math.round((highRisk / total) * 100) : 0;
     
@@ -123,8 +125,14 @@ const ManageMothers = () => {
     if (selectedMohArea !== 'All' && m.mohArea !== selectedMohArea) {
       return false;
     }
-    if (selectedRisk !== 'All' && m.riskStatus !== selectedRisk) {
-      return false;
+    if (selectedRisk !== 'All') {
+      const isHigh = isHighRiskMother(m) || m.riskStatus === 'High-Risk';
+      if ((selectedRisk === 'High-Risk' || selectedRisk === 'High Risk') && !isHigh) {
+        return false;
+      }
+      if (selectedRisk === 'Normal' && isHigh) {
+        return false;
+      }
     }
     if (selectedTrimester !== 'All') {
       const weeks = Number(m.gestationalAge || m.weeks || 0);

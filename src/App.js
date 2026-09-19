@@ -8,6 +8,7 @@ import AddMOHAdmin from './pages/SuperAdmin/AddMOHAdmin';
 import AddHospitalAdmin from './pages/SuperAdmin/AddHospitalAdmin';
 import ManageMidwives from './pages/SuperAdmin/ManageMidwives';
 import ManageMothers from './pages/SuperAdmin/ManageMothers';
+import ReportsAndDocuments from './pages/SuperAdmin/ReportsAndDocuments';
 
 // MOH Admin Pages
 import MOHDashboard from './pages/MOHAdmin/MOHDashboard';
@@ -34,6 +35,7 @@ function App() {
         <Route path="/super-admin/add-hospital" element={<AddHospitalAdmin />} />
         <Route path="/super-admin/manage-midwives" element={<ManageMidwives />} />
         <Route path="/super-admin/manage-mothers" element={<ManageMothers />} />
+        <Route path="/super-admin/reports" element={<ReportsAndDocuments />} />
 
         {/* MOH Admin Routes */}
         <Route path="/moh-admin/dashboard" element={<MOHDashboard />} />
