@@ -3,7 +3,7 @@ import { db } from '../../firebase/config';
 import { collection, getDocs } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
-import { DISTRICTS, findDistrictByMohArea } from '../../data/sriLankaLocations';
+import { findDistrictByMohArea } from '../../data/sriLankaLocations';
 
 const Dashboard = () => {
   const [counts, setCounts] = useState({
@@ -103,10 +103,18 @@ const Dashboard = () => {
 
   const totalMothers = counts.mothers || 1;
   const highRiskPercent = counts.mothers > 0 ? Math.round((counts.highRisk / totalMothers) * 100) : 0;
-  const normalPercent = 100 - highRiskPercent;
-
-  const totalStaff = counts.mohAdmins + counts.hospitalAdmins + counts.midwives;
   const maxDistrictCount = Math.max(...districtData.map(d => d.count), 1);
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="flex flex-col items-center justify-center py-32">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mb-4"></div>
+          <p className="text-gray-500 font-bold text-sm">දත්ත ලබාගනිමින් පවතී... (Loading Command Center...)</p>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>

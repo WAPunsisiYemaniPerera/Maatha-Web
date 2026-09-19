@@ -135,7 +135,17 @@ const MOHDashboard = () => {
   const availableMohAreas = getMohAreas(district);
   const totalMothers = stats.mothersCount || 1;
   const highRiskPercentage = stats.mothersCount > 0 ? Math.round((stats.highRiskCount / totalMothers) * 100) : 0;
-  const normalPercentage = 100 - highRiskPercentage;
+
+  if (loading) {
+    return (
+      <MOHLayout>
+        <div className="flex flex-col items-center justify-center py-32">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mb-4"></div>
+          <p className="text-gray-500 font-bold text-sm">MOH දත්ත පද්ධතිය ලබාගනිමින් පවතී... (Loading MOH Command Center...)</p>
+        </div>
+      </MOHLayout>
+    );
+  }
 
   return (
     <MOHLayout>
