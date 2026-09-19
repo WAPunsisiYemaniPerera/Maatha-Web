@@ -4,6 +4,8 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, collection, getDocs, deleteDoc, updateDoc } from 'firebase/firestore';
 import AdminLayout from '../../components/AdminLayout';
 import { DISTRICTS, getMohAreas, findDistrictByMohArea } from '../../data/sriLankaLocations';
+import PasswordSecurityField from '../../components/PasswordSecurityField';
+import { checkEmailUniqueness, evaluatePasswordStrength, formatAuthError, isValidEmail } from '../../utils/securityValidators';
 
 const DESIGNATIONS = [
   'Medical Officer of Health (MOH)',
@@ -41,7 +43,6 @@ const AddMOHAdmin = () => {
   const [viewingAdmin, setViewingAdmin] = useState(null);
   const [tableDistrictFilter, setTableDistrictFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
 
   const fetchAdmins = async () => {
     try {
@@ -69,7 +70,7 @@ const AddMOHAdmin = () => {
   const showToast = (msg, type = 'success') => {
     setMessage(msg);
     setMessageType(type);
-    setTimeout(() => setMessage(''), 4000);
+    setTimeout(() => setMessage(''), 5000);
   };
 
   const handleSubmit = async (e) => {
@@ -85,6 +86,25 @@ const AddMOHAdmin = () => {
     if (!formData.nic.trim()) {
       showToast("කරුණාකර ජාතික හැඳුනුම්පත් අංකය (NIC) ඇතුළත් කරන්න", 'error');
       return;
+    }
+    if (!isValidEmail(formData.email)) {
+      showToast("වලංගු නොවන ඊමේල් ලිපිනයකි. (Please provide a valid email format)", 'error');
+      return;
+    }
+
+    // On new creation: Validate email uniqueness and password strength
+    if (!editingId) {
+      const isUnique = await checkEmailUniqueness(db, formData.email);
+      if (!isUnique) {
+        showToast("මෙම ඊමේල් ලිපිනය දැනටමත් වෙනත් ගිණුමක් සඳහා ලියාපදිංචි කර ඇත. (This email is already in use)", 'error');
+        return;
+      }
+
+      const strength = evaluatePasswordStrength(formData.password);
+      if (!strength.isValid) {
+        showToast("මුරපදය ප්‍රමාණවත් තරම් ශක්තිමත් නැත. අවම වශයෙන් අකුරු 8ක්, අංක සහ විශේෂ සංකේත යොදන්න. (Password is too weak)", 'error');
+        return;
+      }
     }
 
     setLoading(true);
@@ -107,14 +127,16 @@ const AddMOHAdmin = () => {
         });
         showToast("MOH නිලධාරී විස්තර සාර්ථකව යාවත්කාලීන කරන ලදී! (Officer Details Updated)");
       } else {
-        const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+        const userCredential = await createUserWithEmailAndPassword(auth, formData.email.toLowerCase().trim(), formData.password);
         const uid = userCredential.user.uid;
 
+        // Note: Password is encrypted & salted on Firebase Auth via scrypt. NEVER stored in plaintext in Firestore!
         await setDoc(doc(db, "users", uid), {
-          email: formData.email,
+          email: formData.email.toLowerCase().trim(),
           role: "moh_admin",
           fullName: formData.fullName,
-          uid
+          uid,
+          createdAt: new Date()
         });
 
         await setDoc(doc(db, "moh_admins", uid), {
@@ -125,7 +147,7 @@ const AddMOHAdmin = () => {
           gender: formData.gender,
           phone: formData.phone,
           officePhone: formData.officePhone,
-          email: formData.email,
+          email: formData.email.toLowerCase().trim(),
           officeAddress: formData.officeAddress,
           district: formData.district,
           mohArea: formData.mohArea,
@@ -134,13 +156,13 @@ const AddMOHAdmin = () => {
           adminId: uid,
           createdAt: new Date()
         });
-        showToast("MOH නිලධාරියා සාර්ථකව පද්ධතියට එක් කරන ලදී! (MOH Officer Registered)");
+        showToast("MOH නිලධාරියා සාර්ථකව ලියාපදිංචි කරන ලදී! (MOH Officer Registered Securely)");
       }
       setFormData(initialFormState);
       setEditingId(null);
       fetchAdmins();
     } catch (error) {
-      showToast("දෝෂයක් සිදු විය: " + error.message, 'error');
+      showToast(formatAuthError(error), 'error');
     }
     setLoading(false);
   };
@@ -423,8 +445,8 @@ const AddMOHAdmin = () => {
             )}
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Section 1: Personal & Professional Details */}
+          <form onSubmit={handleSubmit} autoComplete="off" className="space-y-8">
+            {/* Section 1: Personal & Professional Identity */}
             <div className="space-y-4">
               <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
                 <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center text-sm font-bold">1</div>
@@ -440,10 +462,11 @@ const AddMOHAdmin = () => {
                   <input
                     type="text"
                     name="fullName"
-                    placeholder="උදා: Dr. K. M. Samantha Perera"
+                    placeholder="වෛද්‍යවරයාගේ සම්පූර්ණ නම"
                     value={formData.fullName}
                     onChange={handleChange}
                     required
+                    autoComplete="off"
                     className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all text-sm font-medium"
                   />
                 </div>
@@ -472,10 +495,11 @@ const AddMOHAdmin = () => {
                   <input
                     type="text"
                     name="nic"
-                    placeholder="උදා: 198512345678 හෝ 851234567V"
+                    placeholder="ජාතික හැඳුනුම්පත් අංකය (NIC)"
                     value={formData.nic}
                     onChange={handleChange}
                     required
+                    autoComplete="off"
                     className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all text-sm font-medium font-mono"
                   />
                 </div>
@@ -488,9 +512,10 @@ const AddMOHAdmin = () => {
                   <input
                     type="text"
                     name="slmcNumber"
-                    placeholder="උදා: SLMC-34821"
+                    placeholder="SLMC ලියාපදිංචි අංකය"
                     value={formData.slmcNumber}
                     onChange={handleChange}
+                    autoComplete="off"
                     className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all text-sm font-medium font-mono"
                   />
                 </div>
@@ -522,7 +547,7 @@ const AddMOHAdmin = () => {
                 <h3 className="text-sm font-bold text-gray-800">සම්බන්ධීකරණ සහ කාර්යාල තොරතුරු (Contact & Office Information)</h3>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Personal Phone */}
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">
@@ -531,10 +556,11 @@ const AddMOHAdmin = () => {
                   <input
                     type="tel"
                     name="phone"
-                    placeholder="077 123 4567"
+                    placeholder="07X XXXXXXX"
                     value={formData.phone}
                     onChange={handleChange}
                     required
+                    autoComplete="off"
                     className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all text-sm font-medium"
                   />
                 </div>
@@ -547,43 +573,26 @@ const AddMOHAdmin = () => {
                   <input
                     type="tel"
                     name="officePhone"
-                    placeholder="011 285 2341"
+                    placeholder="0XX XXXXXXX"
                     value={formData.officePhone}
                     onChange={handleChange}
+                    autoComplete="off"
                     className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all text-sm font-medium"
                   />
                 </div>
 
-                {/* Email */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    රාජකාරි ඊමේල් ලිපිනය (Official Email) <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder="officer@moh.health.gov.lk"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    disabled={!!editingId}
-                    className={`w-full p-2.5 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all text-sm font-medium ${
-                      editingId ? 'bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200' : 'bg-gray-50/70 border-gray-200 focus:bg-white'
-                    }`}
-                  />
-                </div>
-
                 {/* Office Address */}
-                <div className="md:col-span-3">
+                <div className="md:col-span-2">
                   <label className="block text-xs font-bold text-gray-700 mb-1">
                     MOH කාර්යාලයේ නිල ලිපිනය (MOH Office Official Address)
                   </label>
                   <input
                     type="text"
                     name="officeAddress"
-                    placeholder="උදා: සෞඛ්‍ය වෛද්‍ය නිලධාරී කාර්යාලය, හයිලෙවල් පාර, මහරගම"
+                    placeholder="කාර්යාල ලිපිනය ඇතුළත් කරන්න"
                     value={formData.officeAddress}
                     onChange={handleChange}
+                    autoComplete="off"
                     className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all text-sm font-medium"
                   />
                 </div>
@@ -674,45 +683,58 @@ const AddMOHAdmin = () => {
               </div>
             </div>
 
-            {/* Section 4: Authentication Password (Only on creation) */}
-            {!editingId && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-                  <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center text-sm font-bold">4</div>
-                  <h3 className="text-sm font-bold text-gray-800">පද්ධති පිවිසුම් මුරපදය (Portal Security Password)</h3>
-                </div>
-
-                <div className="max-w-md">
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    මුල් මුරපදය (Initial Password) <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      name="password"
-                      placeholder="••••••••"
-                      value={formData.password}
-                      onChange={handleChange}
-                      required
-                      minLength={6}
-                      className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none text-sm font-medium pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      {showPassword ? (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" /></svg>
-                      ) : (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                      )}
-                    </button>
-                  </div>
-                  <p className="text-[10px] text-gray-400 font-bold mt-1">අවම වශයෙන් අකුරු 6ක් අඩංගු විය යුතුය.</p>
+            {/* Section 4: Authentication Credentials (Email & Password) */}
+            <div className="space-y-4 bg-emerald-50/40 p-5 rounded-2xl border border-emerald-100">
+              <div className="flex items-center gap-2 pb-2 border-b border-emerald-200/60">
+                <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-sm font-bold shadow-sm">4</div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-gray-800">පද්ධති පිවිසුම් ගිණුම් තොරතුරු (System Login & Access Credentials)</h3>
+                  <p className="text-[11px] text-gray-500 font-medium">MOH නිලධාරියා පද්ධතියට ලොග් වීම සඳහා භාවිත කරන ඊමේල් ලිපිනය සහ ආරක්‍ෂිත මුරපදය</p>
                 </div>
               </div>
-            )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Email Address */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    රාජකාරි පිවිසුම් ඊමේල් ලිපිනය (Official Login Email) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="officer@moh.health.gov.lk"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    disabled={!!editingId}
+                    className={`w-full p-2.5 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all text-sm font-medium ${
+                      editingId ? 'bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200' : 'bg-white border-gray-200 focus:border-emerald-500 shadow-sm'
+                    }`}
+                  />
+                  <p className="text-[10px] text-gray-500 font-semibold mt-1">
+                    {editingId ? "ලියාපදිංචි කළ ඊමේල් ලිපිනය වෙනස් කළ නොහැක." : "මෙම ඊමේල් ලිපිනය පද්ධතියේ වෙනත් කිසිදු ගිණුමකට භාවිත කර නොතිබිය යුතුය."}
+                  </p>
+                </div>
+
+                {/* Password Field (Only on creation) */}
+                {!editingId ? (
+                  <div>
+                    <PasswordSecurityField
+                      label="ආරම්භක මුරපදය (Initial Password)"
+                      value={formData.password}
+                      onChange={handleChange}
+                      name="password"
+                      placeholder="ශක්තිමත් මුරපදයක් ඇතුළත් කරන්න"
+                      required
+                    />
+                  </div>
+                ) : (
+                  <div className="flex items-center p-3 bg-white rounded-xl border border-gray-200 text-xs text-gray-500">
+                    🔒 මුරපදය සංස්කරණය සඳහා වෙනම මුරපද යළි පිහිටුවීමේ ක්‍රමවේදය (Reset Password) භාවිත කරන්න.
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* Submit Button */}
             <div className="pt-4 border-t border-gray-100 flex flex-col sm:flex-row gap-3">

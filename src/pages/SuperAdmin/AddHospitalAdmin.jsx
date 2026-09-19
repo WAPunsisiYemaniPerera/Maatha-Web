@@ -4,6 +4,8 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, collection, getDocs, deleteDoc, updateDoc } from 'firebase/firestore';
 import AdminLayout from '../../components/AdminLayout';
 import { DISTRICTS } from '../../data/sriLankaLocations';
+import { isValidEmail, checkEmailUniqueness, evaluatePasswordStrength, formatAuthError } from '../../utils/securityValidators';
+import PasswordSecurityField from '../../components/PasswordSecurityField';
 
 const HOSPITAL_TYPES = [
   'National Hospital (ජාතික රෝහල)',
@@ -59,7 +61,6 @@ const AddHospitalAdmin = () => {
   const [tableDistrictFilter, setTableDistrictFilter] = useState('All');
   const [tableTypeFilter, setTableTypeFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
 
   const fetchHospitalAdmins = async () => {
     try {
@@ -96,62 +97,89 @@ const AddHospitalAdmin = () => {
       return;
     }
 
+    const cleanEmail = formData.email.trim().toLowerCase();
+
+    if (!isValidEmail(cleanEmail)) {
+      showToast("වලංගු ඊමේල් ලිපිනයක් ඇතුළත් කරන්න (Please enter a valid email address)", 'error');
+      return;
+    }
+
     setLoading(true);
     try {
       if (editingId) {
         await updateDoc(doc(db, "hospital_admins", editingId), {
-          hospitalName: formData.hospitalName,
+          hospitalName: formData.hospitalName.trim(),
           hospitalType: formData.hospitalType,
-          hospitalCode: formData.hospitalCode,
+          hospitalCode: formData.hospitalCode.trim(),
           district: formData.district,
-          city: formData.city,
-          hospitalAddress: formData.hospitalAddress,
-          hospitalPhone: formData.hospitalPhone,
+          city: formData.city.trim(),
+          hospitalAddress: formData.hospitalAddress.trim(),
+          hospitalPhone: formData.hospitalPhone.trim(),
           maternityWardCapacity: formData.maternityWardCapacity,
           hasNicu: formData.hasNicu,
           hasBloodBank: formData.hasBloodBank,
           hasLabourRoom: formData.hasLabourRoom,
-          fullName: formData.adminName,
-          adminNic: formData.adminNic,
-          slmcNumber: formData.slmcNumber,
+          fullName: formData.adminName.trim(),
+          adminNic: formData.adminNic.trim().toUpperCase(),
+          slmcNumber: formData.slmcNumber.trim(),
           designation: formData.designation,
           gender: formData.gender,
-          adminPhone: formData.adminPhone,
+          adminPhone: formData.adminPhone.trim(),
           status: formData.status,
           updatedAt: new Date()
         });
         showToast("රෝහල් සහ පාලක විස්තර සාර්ථකව යාවත්කාලීන කරන ලදී! (Details Updated Successfully)");
       } else {
-        const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+        // Email Uniqueness Pre-check
+        const emailAvailable = await checkEmailUniqueness(db, cleanEmail);
+        if (!emailAvailable) {
+          showToast("මෙම ඊමේල් ලිපිනය දැනටමත් පද්ධතියේ වෙනත් ගිණුමක් සඳහා ලියාපදිංචි කර ඇත. (Email already in use)", 'error');
+          setLoading(false);
+          return;
+        }
+
+        // Password Strength Validation (Salted & Hashed by Firebase Auth)
+        const strength = evaluatePasswordStrength(formData.password);
+        if (strength.score < 3 || !strength.criteria.hasMinLength) {
+          showToast("මුරපදය ප්‍රමාණවත් තරම් ශක්තිමත් නැත. අවම වශයෙන් අකුරු 8ක්, ලොකු/කුඩා අකුරු, අංක සහ විශේෂ ලක්ෂණ ඇතුළත් කරන්න.", 'error');
+          setLoading(false);
+          return;
+        }
+
+        // Create Firebase Auth user (Firebase Auth securely salts & hashes with scrypt)
+        const userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, formData.password);
         const uid = userCredential.user.uid;
 
+        // Secure User Document (Strictly NO plaintext password)
         await setDoc(doc(db, "users", uid), {
-          email: formData.email,
+          email: cleanEmail,
           role: "hospital_admin",
-          fullName: formData.adminName,
-          hospitalName: formData.hospitalName,
-          uid: uid
+          fullName: formData.adminName.trim(),
+          hospitalName: formData.hospitalName.trim(),
+          uid: uid,
+          createdAt: new Date()
         });
 
+        // Hospital Administrator Profile (Strictly NO plaintext password)
         await setDoc(doc(db, "hospital_admins", uid), {
-          hospitalName: formData.hospitalName,
+          hospitalName: formData.hospitalName.trim(),
           hospitalType: formData.hospitalType,
-          hospitalCode: formData.hospitalCode || `HOSP-${formData.district.substring(0, 3).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`,
+          hospitalCode: formData.hospitalCode.trim() || `HOSP-${formData.district.substring(0, 3).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`,
           district: formData.district,
-          city: formData.city,
-          hospitalAddress: formData.hospitalAddress,
-          hospitalPhone: formData.hospitalPhone,
+          city: formData.city.trim(),
+          hospitalAddress: formData.hospitalAddress.trim(),
+          hospitalPhone: formData.hospitalPhone.trim(),
           maternityWardCapacity: formData.maternityWardCapacity || '50',
           hasNicu: formData.hasNicu,
           hasBloodBank: formData.hasBloodBank,
           hasLabourRoom: formData.hasLabourRoom,
-          fullName: formData.adminName,
-          adminNic: formData.adminNic,
-          slmcNumber: formData.slmcNumber,
+          fullName: formData.adminName.trim(),
+          adminNic: formData.adminNic.trim().toUpperCase(),
+          slmcNumber: formData.slmcNumber.trim(),
           designation: formData.designation,
           gender: formData.gender,
-          adminPhone: formData.adminPhone,
-          email: formData.email,
+          adminPhone: formData.adminPhone.trim(),
+          email: cleanEmail,
           status: formData.status || 'Active',
           adminId: uid,
           createdAt: new Date()
@@ -163,7 +191,7 @@ const AddHospitalAdmin = () => {
       setEditingId(null);
       fetchHospitalAdmins();
     } catch (error) {
-      showToast("දෝෂයක් සිදු විය: " + error.message, 'error');
+      showToast("දෝෂයක් සිදු විය: " + formatAuthError(error), 'error');
     }
     setLoading(false);
   };
@@ -457,7 +485,7 @@ const AddHospitalAdmin = () => {
             )}
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-8">
+          <form onSubmit={handleSubmit} autoComplete="off" className="space-y-8">
             {/* Section 1: Hospital Profile */}
             <div className="space-y-4">
               <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
@@ -474,10 +502,11 @@ const AddHospitalAdmin = () => {
                   <input
                     type="text"
                     name="hospitalName"
-                    placeholder="උදා: National Hospital of Sri Lanka / District General Hospital Negombo"
+                    placeholder="රෝහලේ නම ඇතුළත් කරන්න"
                     value={formData.hospitalName}
                     onChange={handleChange}
                     required
+                    autoComplete="off"
                     className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-sm font-medium"
                   />
                 </div>
@@ -508,9 +537,10 @@ const AddHospitalAdmin = () => {
                   <input
                     type="text"
                     name="hospitalCode"
-                    placeholder="උදා: HOSP-WP-COL-001"
+                    placeholder="රෝහල් කේතය (විකල්ප)"
                     value={formData.hospitalCode}
                     onChange={handleChange}
+                    autoComplete="off"
                     className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-sm font-medium font-mono"
                   />
                 </div>
@@ -542,9 +572,10 @@ const AddHospitalAdmin = () => {
                   <input
                     type="text"
                     name="city"
-                    placeholder="උදා: Colombo 07 / Panadura"
+                    placeholder="නගරය"
                     value={formData.city}
                     onChange={handleChange}
+                    autoComplete="off"
                     className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-sm font-medium"
                   />
                 </div>
@@ -557,9 +588,10 @@ const AddHospitalAdmin = () => {
                   <input
                     type="tel"
                     name="hospitalPhone"
-                    placeholder="උදා: 011 269 1111"
+                    placeholder="0XX XXXXXXX"
                     value={formData.hospitalPhone}
                     onChange={handleChange}
+                    autoComplete="off"
                     className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-sm font-medium"
                   />
                 </div>
@@ -572,9 +604,10 @@ const AddHospitalAdmin = () => {
                   <input
                     type="text"
                     name="hospitalAddress"
-                    placeholder="උදා: Regent Street, Colombo 08"
+                    placeholder="රෝහලේ ලිපිනය ඇතුළත් කරන්න"
                     value={formData.hospitalAddress}
                     onChange={handleChange}
+                    autoComplete="off"
                     className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-sm font-medium"
                   />
                 </div>
@@ -597,9 +630,10 @@ const AddHospitalAdmin = () => {
                   <input
                     type="number"
                     name="maternityWardCapacity"
-                    placeholder="උදා: 120"
+                    placeholder="ඇඳන් ගණන"
                     value={formData.maternityWardCapacity}
                     onChange={handleChange}
+                    autoComplete="off"
                     className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-sm font-medium"
                   />
                 </div>
@@ -670,10 +704,11 @@ const AddHospitalAdmin = () => {
                   <input
                     type="text"
                     name="adminName"
-                    placeholder="උදා: Dr. N. Wickramasinghe"
+                    placeholder="පාලකවරයාගේ සම්පූර්ණ නම"
                     value={formData.adminName}
                     onChange={handleChange}
                     required
+                    autoComplete="off"
                     className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-sm font-medium"
                   />
                 </div>
@@ -686,10 +721,11 @@ const AddHospitalAdmin = () => {
                   <input
                     type="text"
                     name="adminNic"
-                    placeholder="උදා: 198012345678 හෝ 801234567V"
+                    placeholder="ජාතික හැඳුනුම්පත් අංකය (NIC)"
                     value={formData.adminNic}
                     onChange={handleChange}
                     required
+                    autoComplete="off"
                     className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-sm font-medium font-mono"
                   />
                 </div>
@@ -720,9 +756,10 @@ const AddHospitalAdmin = () => {
                   <input
                     type="text"
                     name="slmcNumber"
-                    placeholder="උදා: SLMC-28491"
+                    placeholder="SLMC ලියාපදිංචි අංකය"
                     value={formData.slmcNumber}
                     onChange={handleChange}
+                    autoComplete="off"
                     className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-sm font-medium font-mono"
                   />
                 </div>
@@ -735,30 +772,12 @@ const AddHospitalAdmin = () => {
                   <input
                     type="tel"
                     name="adminPhone"
-                    placeholder="077 345 6789"
+                    placeholder="07X XXXXXXX"
                     value={formData.adminPhone}
                     onChange={handleChange}
                     required
+                    autoComplete="off"
                     className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-sm font-medium"
-                  />
-                </div>
-
-                {/* Email Address */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    රාජකාරි ඊමේල් ලිපිනය (Official Email) <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder="director.hospital@health.gov.lk"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    disabled={!!editingId}
-                    className={`w-full p-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-medium ${
-                      editingId ? 'bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200' : 'bg-gray-50/70 border-gray-200 focus:bg-white'
-                    }`}
                   />
                 </div>
 
@@ -797,45 +816,58 @@ const AddHospitalAdmin = () => {
               </div>
             </div>
 
-            {/* Section 4: Security Password (Only on creation) */}
-            {!editingId && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-                  <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center text-sm font-bold">4</div>
-                  <h3 className="text-sm font-bold text-gray-800">පද්ධති පිවිසුම් මුරපදය (Security Access Password)</h3>
-                </div>
-
-                <div className="max-w-md">
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    මුල් මුරපදය (Initial Password) <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      name="password"
-                      placeholder="••••••••"
-                      value={formData.password}
-                      onChange={handleChange}
-                      required
-                      minLength={6}
-                      className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none text-sm font-medium pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      {showPassword ? (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" /></svg>
-                      ) : (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                      )}
-                    </button>
-                  </div>
-                  <p className="text-[10px] text-gray-400 font-bold mt-1">අවම වශයෙන් අකුරු 6ක් අඩංගු විය යුතුය.</p>
+            {/* Section 4: System Login Credentials (Email & Password) */}
+            <div className="space-y-4 bg-indigo-50/40 p-5 rounded-2xl border border-indigo-100">
+              <div className="flex items-center gap-2 pb-2 border-b border-indigo-200/60">
+                <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-sm font-bold shadow-sm">4</div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-gray-800">පද්ධති පිවිසුම් ගිණුම් තොරතුරු (System Login & Access Credentials)</h3>
+                  <p className="text-[11px] text-gray-500 font-medium">රෝහල් පරිපාලකවරයා පද්ධතියට ලොග් වීම සඳහා භාවිත කරන ඊමේල් ලිපිනය සහ ආරක්‍ෂිත මුරපදය</p>
                 </div>
               </div>
-            )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Official Login Email */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    රාජකාරි පිවිසුම් ඊමේල් ලිපිනය (Official Login Email) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="director.hospital@health.gov.lk"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    disabled={!!editingId}
+                    className={`w-full p-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-medium ${
+                      editingId ? 'bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200' : 'bg-white border-gray-200 focus:border-blue-500 shadow-sm'
+                    }`}
+                  />
+                  <p className="text-[10px] text-gray-500 font-semibold mt-1">
+                    {editingId ? "ලියාපදිංචි කළ ඊමේල් ලිපිනය වෙනස් කළ නොහැක." : "මෙම ඊමේල් ලිපිනය පද්ධතියේ වෙනත් කිසිදු ගිණුමකට භාවිත කර නොතිබිය යුතුය."}
+                  </p>
+                </div>
+
+                {/* Password Field (Only on creation) */}
+                {!editingId ? (
+                  <div>
+                    <PasswordSecurityField
+                      label="ආරම්භක මුරපදය (Initial Password)"
+                      value={formData.password}
+                      onChange={handleChange}
+                      name="password"
+                      placeholder="ශක්තිමත් මුරපදයක් ඇතුළත් කරන්න"
+                      required
+                    />
+                  </div>
+                ) : (
+                  <div className="flex items-center p-3 bg-white rounded-xl border border-gray-200 text-xs text-gray-500">
+                    🔒 මුරපදය සංස්කරණය සඳහා වෙනම මුරපද යළි පිහිටුවීමේ ක්‍රමවේදය (Reset Password) භාවිත කරන්න.
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* Submit & Cancel Buttons */}
             <div className="pt-4 border-t border-gray-100 flex flex-col sm:flex-row gap-3">

@@ -4,6 +4,8 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, collection, getDocs, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import MOHLayout from '../../components/MOHLayout';
 import { DISTRICTS, getMohAreas, findDistrictByMohArea } from '../../data/sriLankaLocations';
+import { isValidEmail, checkEmailUniqueness, evaluatePasswordStrength, formatAuthError } from '../../utils/securityValidators';
+import PasswordSecurityField from '../../components/PasswordSecurityField';
 
 const AddMidwife = () => {
   const [formData, setFormData] = useState({
@@ -22,8 +24,15 @@ const AddMidwife = () => {
   const [midwives, setMidwives] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('success');
   const [editingId, setEditingId] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(null);
+
+  const showToast = (msg, type = 'success') => {
+    setMessage(msg);
+    setMessageType(type);
+    setTimeout(() => setMessage(''), 4000);
+  };
 
   // Load logged-in MOH Admin details
   useEffect(() => {
@@ -82,7 +91,14 @@ const AddMidwife = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.district || !formData.mohOffice) {
-      setMessage("කරුණාකර දිස්ත්‍රික්කය සහ MOH ප්‍රදේශය තෝරන්න.");
+      showToast("කරුණාකර දිස්ත්‍රික්කය සහ MOH ප්‍රදේශය තෝරන්න.", 'error');
+      return;
+    }
+
+    const cleanEmail = formData.email.trim().toLowerCase();
+
+    if (!isValidEmail(cleanEmail)) {
+      showToast("වලංගු ඊමේල් ලිපිනයක් ඇතුළත් කරන්න (Please enter a valid email address)", 'error');
       return;
     }
 
@@ -90,34 +106,62 @@ const AddMidwife = () => {
     try {
       if (editingId) {
         await updateDoc(doc(db, "midwives", editingId), {
-          fullName: formData.fullName,
-          phone: formData.phone,
+          fullName: formData.fullName.trim(),
+          phone: formData.phone.trim(),
           district: formData.district,
           mohArea: formData.mohOffice,
-          serviceArea: formData.serviceArea,
-          gnDivisions: formData.gnDivisions,
-          employeeId: formData.employeeId
+          serviceArea: formData.serviceArea.trim(),
+          gnDivisions: formData.gnDivisions.trim(),
+          employeeId: formData.employeeId.trim(),
+          updatedAt: new Date()
         });
-        setMessage("නිලධාරිනියගේ විස්තර යාවත්කාලීන කරන ලදී! (Details Updated)");
+        showToast("නිලධාරිනියගේ විස්තර යාවත්කාලීන කරන ලදී! (Details Updated)");
       } else {
-        const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+        // Strict Email Uniqueness Check
+        const emailAvailable = await checkEmailUniqueness(db, cleanEmail);
+        if (!emailAvailable) {
+          showToast("මෙම ඊමේල් ලිපිනය දැනටමත් පද්ධතියේ වෙනත් ගිණුමක් සඳහා ලියාපදිංචි කර ඇත. (Email already registered)", 'error');
+          setLoading(false);
+          return;
+        }
+
+        // Strong Password Validation
+        const strength = evaluatePasswordStrength(formData.password);
+        if (strength.score < 3 || !strength.criteria.hasMinLength) {
+          showToast("මුරපදය ප්‍රමාණවත් තරම් ශක්තිමත් නැත. අවම වශයෙන් අකුරු 8ක්, ලොකු/කුඩා අකුරු, අංක සහ විශේෂ ලක්ෂණ ඇතුළත් කරන්න.", 'error');
+          setLoading(false);
+          return;
+        }
+
+        // Firebase Auth secure hashing with scrypt
+        const userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, formData.password);
         const uid = userCredential.user.uid;
 
-        await setDoc(doc(db, "users", uid), { email: formData.email, role: "midwife", uid });
+        // Secure User Document (Strictly NO plaintext password)
+        await setDoc(doc(db, "users", uid), {
+          email: cleanEmail,
+          role: "midwife",
+          fullName: formData.fullName.trim(),
+          mohArea: formData.mohOffice,
+          uid: uid,
+          createdAt: new Date()
+        });
+
+        // Midwife Profile Document (Strictly NO plaintext password)
         await setDoc(doc(db, "midwives", uid), {
-          fullName: formData.fullName,
-          nic: formData.nic,
-          phone: formData.phone,
-          email: formData.email,
-          employeeId: formData.employeeId,
+          fullName: formData.fullName.trim(),
+          nic: formData.nic.trim().toUpperCase(),
+          phone: formData.phone.trim(),
+          email: cleanEmail,
+          employeeId: formData.employeeId.trim(),
           district: formData.district,
           mohArea: formData.mohOffice,
-          serviceArea: formData.serviceArea,
-          gnDivisions: formData.gnDivisions,
+          serviceArea: formData.serviceArea.trim(),
+          gnDivisions: formData.gnDivisions.trim(),
           midwifeId: uid,
           createdAt: new Date()
         });
-        setMessage("නිලධාරිනිය සාර්ථකව පද්ධතියට එක් කරන ලදී! (Midwife Registered)");
+        showToast("නිලධාරිනිය සාර්ථකව පද්ධතියට එක් කරන ලදී! (Midwife Registered)");
       }
       setFormData(prev => ({ 
         ...prev, 
@@ -132,9 +176,8 @@ const AddMidwife = () => {
       }));
       setEditingId(null);
       fetchMidwives();
-      setTimeout(() => setMessage(''), 3000);
     } catch (error) {
-      setMessage("දෝෂයක් සිදු විය: " + error.message);
+      showToast("දෝෂයක් සිදු විය: " + formatAuthError(error), 'error');
     }
     setLoading(false);
   };
@@ -183,7 +226,18 @@ const AddMidwife = () => {
       )}
 
       {message && (
-        <div className="fixed top-5 right-5 z-[110] bg-slate-900 text-white px-6 py-4 rounded-xl shadow-2xl border-l-4 border-green-500 animate-in slide-in-from-right duration-500">
+        <div className={`fixed top-5 right-5 z-[110] text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center space-x-3 animate-in slide-in-from-right duration-500 ${
+          messageType === 'error' ? 'bg-red-900 border-l-4 border-red-500' : 'bg-slate-900 border-l-4 border-emerald-500'
+        }`}>
+          <div className={`rounded-full p-1 ${messageType === 'error' ? 'bg-red-500' : 'bg-emerald-500'}`}>
+            <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              {messageType === 'error' ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              )}
+            </svg>
+          </div>
           <p className="text-sm font-bold tracking-tight">{message}</p>
         </div>
       )}
@@ -202,73 +256,92 @@ const AddMidwife = () => {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <InputField label="සම්පූර්ණ නම" sub="Full Name" name="fullName" value={formData.fullName} onChange={handleChange} required />
-              <InputField label="ජාතික හැඳුනුම්පත් අංකය" sub="NIC Number" name="nic" value={formData.nic} onChange={handleChange} required disabled={!!editingId} />
-              <InputField label="දුරකථන අංකය" sub="Phone Number" name="phone" value={formData.phone} onChange={handleChange} required />
-              <InputField label="සේවක අංකය" sub="Employee ID" name="employeeId" value={formData.employeeId} onChange={handleChange} required />
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <InputField label="සම්පූර්ණ නම" sub="Full Name" name="fullName" value={formData.fullName} onChange={handleChange} required />
+                <InputField label="ජාතික හැඳුනුම්පත් අංකය" sub="NIC Number" name="nic" value={formData.nic} onChange={handleChange} required disabled={!!editingId} />
+                <InputField label="දුරකථන අංකය" sub="Phone Number" name="phone" value={formData.phone} onChange={handleChange} required />
+                <InputField label="සේවක අංකය" sub="Employee ID" name="employeeId" value={formData.employeeId} onChange={handleChange} required />
 
-              {/* District Selector */}
-              <div>
-                <label className="block text-[12px] font-bold text-gray-700 mb-1">
-                  දිස්ත්‍රික්කය <span className="text-[10px] font-black text-gray-400 uppercase ml-1">(District)</span>
-                </label>
-                <select
-                  name="district"
-                  value={formData.district}
-                  onChange={handleChange}
-                  required
-                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm font-medium"
-                >
-                  {DISTRICTS.map(dist => (
-                    <option key={dist} value={dist}>{dist}</option>
-                  ))}
-                </select>
+                {/* District Selector */}
+                <div>
+                  <label className="block text-[12px] font-bold text-gray-700 mb-1">
+                    දිස්ත්‍රික්කය <span className="text-[10px] font-black text-gray-400 uppercase ml-1">(District)</span>
+                  </label>
+                  <select
+                    name="district"
+                    value={formData.district}
+                    onChange={handleChange}
+                    required
+                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm font-medium"
+                  >
+                    {DISTRICTS.map(dist => (
+                      <option key={dist} value={dist}>{dist}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <InputField label="විද්‍යුත් තැපෑල" sub="Official Email Address" name="email" type="email" value={formData.email} onChange={handleChange} required disabled={!!editingId} />
+
+                {/* MOH Area Selector */}
+                <div>
+                  <label className="block text-[12px] font-bold text-gray-700 mb-1">
+                    MOH ප්‍රදේශය <span className="text-[10px] font-black text-gray-400 uppercase ml-1">(MOH Area)</span>
+                  </label>
+                  <select
+                    name="mohOffice"
+                    value={formData.mohOffice}
+                    onChange={handleChange}
+                    required
+                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm font-medium"
+                  >
+                    {availableMohAreas.map(area => (
+                      <option key={area} value={area}>{area}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* PHM Service Area */}
+                <InputField 
+                  label="සේවා ප්‍රදේශය (PHM Area)" 
+                  sub="Public Health Midwife Area Name / Code" 
+                  placeholder="උදා: 602-B Homagama Town / Pitipana"
+                  name="serviceArea" 
+                  value={formData.serviceArea} 
+                  onChange={handleChange} 
+                  required 
+                />
+
+                <InputField label="ග්‍රාම නිලධාරී වසම්" sub="GN Divisions (Comma separated)" name="gnDivisions" value={formData.gnDivisions} onChange={handleChange} required />
               </div>
             </div>
 
-            <div className="space-y-4">
-              <InputField label="විද්‍යුත් තැපෑල" sub="Email Address" name="email" type="email" value={formData.email} onChange={handleChange} required disabled={!!editingId} />
-
-              {/* MOH Area Selector */}
-              <div>
-                <label className="block text-[12px] font-bold text-gray-700 mb-1">
-                  MOH ප්‍රදේශය <span className="text-[10px] font-black text-gray-400 uppercase ml-1">(MOH Area)</span>
-                </label>
-                <select
-                  name="mohOffice"
-                  value={formData.mohOffice}
-                  onChange={handleChange}
-                  required
-                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm font-medium"
-                >
-                  {availableMohAreas.map(area => (
-                    <option key={area} value={area}>{area}</option>
-                  ))}
-                </select>
+            {/* Password Field (Only on creation) */}
+            {!editingId && (
+              <div className="border-t border-gray-100 pt-5">
+                <div className="max-w-xl">
+                  <PasswordSecurityField
+                    label="පද්ධති පිවිසුම් මුරපදය (Security Login Password)"
+                    value={formData.password}
+                    onChange={handleChange}
+                    name="password"
+                    placeholder="ශක්තිමත් මුරපදයක් ඇතුළත් කරන්න"
+                    required
+                  />
+                </div>
               </div>
+            )}
 
-              {/* PHM Service Area */}
-              <InputField 
-                label="සේවා ප්‍රදේශය (PHM Area)" 
-                sub="Public Health Midwife Area Name / Code" 
-                placeholder="උදා: 602-B Homagama Town / Pitipana"
-                name="serviceArea" 
-                value={formData.serviceArea} 
-                onChange={handleChange} 
-                required 
-              />
-
-              <InputField label="ග්‍රාම නිලධාරී වසම්" sub="GN Divisions (Comma separated)" name="gnDivisions" value={formData.gnDivisions} onChange={handleChange} required />
-              {!editingId && <InputField label="මුරපදය" sub="Login Password" name="password" type="password" value={formData.password} onChange={handleChange} required />}
+            <div className="pt-2">
+              <button type="submit" disabled={loading} className="w-full bg-green-600 text-white font-black py-4 rounded-xl shadow-lg hover:bg-green-700 active:scale-95 transition-all uppercase tracking-tighter">
+                {loading ? "ක්‍රියාත්මක වෙමින්... (Processing)" : (editingId ? "යාවත්කාලීන කරන්න (Update Details)" : "නිලධාරිනිය පද්ධතියට එක් කරන්න (Register Midwife)")}
+              </button>
             </div>
-
-            <button type="submit" disabled={loading} className="md:col-span-2 bg-green-600 text-white font-black py-4 rounded-xl shadow-lg hover:bg-green-700 active:scale-95 transition-all mt-4 uppercase tracking-tighter">
-              {loading ? "ක්‍රියාත්මක වෙමින්... (Processing)" : (editingId ? "යාවත්කාලීන කරන්න (Update Details)" : "නිලධාරිනිය පද්ධතියට එක් කරන්න (Register Midwife)")}
-            </button>
             {editingId && (
-              <button type="button" onClick={() => { setEditingId(null); setFormData(prev => ({ ...prev, fullName:'', nic:'', phone:'', email:'', employeeId:'', serviceArea:'', gnDivisions:'', password:'' })); }} className="md:col-span-2 bg-gray-500 text-white font-bold py-2 rounded-xl hover:bg-gray-600 transition-all">
+              <button type="button" onClick={() => { setEditingId(null); setFormData(prev => ({ ...prev, fullName:'', nic:'', phone:'', email:'', employeeId:'', serviceArea:'', gnDivisions:'', password:'' })); }} className="w-full bg-gray-500 text-white font-bold py-2 rounded-xl hover:bg-gray-600 transition-all">
                 Cancel Edit
               </button>
             )}
