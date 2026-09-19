@@ -146,9 +146,9 @@ const ManageMidwives = () => {
       {/* Toast Notification */}
       {message && (
         <div className={`fixed top-5 right-5 z-[130] text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center space-x-4 animate-in slide-in-from-right duration-500 ${
-          messageType === 'error' ? 'bg-red-900 border-l-4 border-red-500' : 'bg-slate-900 border-l-4 border-indigo-500'
+          messageType === 'error' ? 'bg-red-900 border-l-4 border-red-500' : 'bg-slate-900 border-l-4 border-blue-500'
         }`}>
-          <div className={`rounded-full p-1.5 ${messageType === 'error' ? 'bg-red-500' : 'bg-indigo-500'}`}>
+          <div className={`rounded-full p-1.5 ${messageType === 'error' ? 'bg-red-500' : 'bg-blue-500'}`}>
             <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               {messageType === 'error' ? (
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
@@ -163,13 +163,13 @@ const ManageMidwives = () => {
 
       {/* Full Midwife Profile Dossier Modal */}
       {viewingMidwife && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-300">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-blue-950/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-3xl w-full shadow-2xl overflow-hidden border border-blue-100 animate-in zoom-in-95 duration-300">
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-blue-800 via-indigo-850 to-slate-900 p-6 text-white relative">
+            <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-950 p-6 sm:p-8 text-white relative">
               <button 
                 onClick={() => setViewingMidwife(null)}
-                className="absolute top-5 right-5 text-white/80 hover:text-white bg-black/20 hover:bg-black/40 rounded-full p-2 transition-all"
+                className="absolute top-5 right-5 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2.5 transition-all"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -180,19 +180,19 @@ const ManageMidwives = () => {
                 <div className="w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-4xl shadow-inner shrink-0">
                   👩‍⚕️
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-block px-3 py-0.5 rounded-full bg-blue-500/30 text-blue-200 text-[10px] font-black uppercase tracking-wider border border-blue-400/30">
+                    <span className="inline-block px-3 py-1 rounded-full bg-blue-500/30 text-blue-200 text-xs font-black uppercase tracking-wider border border-blue-400/30">
                       Public Health Midwife (PHM)
                     </span>
                     {viewingMidwife.status && (
-                      <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                      <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-3 py-0.5 rounded-full text-xs font-bold">
                         ● {viewingMidwife.status}
                       </span>
                     )}
                   </div>
-                  <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight">{viewingMidwife.fullName}</h3>
-                  <div className="flex flex-wrap items-center gap-3 text-xs opacity-90 font-mono">
+                  <h3 className="text-2xl sm:text-3xl font-black tracking-tight">{viewingMidwife.fullName}</h3>
+                  <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm opacity-90 font-mono">
                     <span>ID: {viewingMidwife.employeeId || 'නොදක්වා ඇත'}</span>
                     <span>•</span>
                     <span>NIC: {viewingMidwife.nic || '—'}</span>
@@ -204,121 +204,121 @@ const ManageMidwives = () => {
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 space-y-5 max-h-[72vh] overflow-y-auto custom-scrollbar">
+            <div className="p-6 sm:p-8 space-y-6 max-h-[72vh] overflow-y-auto custom-scrollbar">
               {/* Quick Stat Highlights */}
-              <div className="grid grid-cols-3 gap-3 text-center">
-                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block">සේවක අංකය (ID)</span>
-                  <span className="text-sm font-black text-slate-800 mt-1 block font-mono">
+              <div className="grid grid-cols-3 gap-3.5 text-center">
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">සේවක අංකය (ID)</span>
+                  <span className="text-base sm:text-lg font-black text-slate-800 mt-1 block font-mono">
                     {viewingMidwife.employeeId || '—'}
                   </span>
                 </div>
 
-                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block">දිස්ත්‍රික්කය</span>
-                  <span className="text-xs font-bold text-slate-800 mt-1 block">
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">දිස්ත්‍රික්කය</span>
+                  <span className="text-xs sm:text-sm font-bold text-slate-800 mt-1 block">
                     {viewingMidwife.district || findDistrictByMohArea(viewingMidwife.mohArea) || '—'}
                   </span>
                 </div>
 
-                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block">සේවා කලාපය</span>
-                  <span className="text-xs font-bold text-indigo-700 mt-1 block">
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">සේවා කලාපය</span>
+                  <span className="text-xs sm:text-sm font-bold text-blue-700 mt-1 block">
                     {viewingMidwife.serviceArea || '—'}
                   </span>
                 </div>
               </div>
 
               {/* Personal & Official Credentials */}
-              <div className="bg-gray-50/70 p-4 rounded-2xl border border-gray-100 space-y-3">
-                <h4 className="text-xs font-black text-gray-700 uppercase tracking-wider flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-blue-600"></span>
+              <div className="bg-blue-50/40 p-5 rounded-2xl border border-blue-100 space-y-3">
+                <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
                   වෘත්තීය සහ නිල තොරතුරු (Professional Credentials)
                 </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-gray-400 font-bold block">සම්පූර්ණ නම:</span>
-                    <span className="font-bold text-gray-800">{viewingMidwife.fullName}</span>
+                    <span className="text-slate-400 font-bold block">සම්පූර්ණ නම:</span>
+                    <span className="font-bold text-slate-900 text-base">{viewingMidwife.fullName}</span>
                   </div>
                   <div>
-                    <span className="text-gray-400 font-bold block">ජාතික හැඳුනුම්පත (NIC):</span>
-                    <span className="font-semibold text-gray-800 font-mono">{viewingMidwife.nic || 'නොදක්වා ඇත'}</span>
+                    <span className="text-slate-400 font-bold block">ජාතික හැඳුනුම්පත (NIC):</span>
+                    <span className="font-semibold text-slate-800 font-mono">{viewingMidwife.nic || 'නොදක්වා ඇත'}</span>
                   </div>
                   <div>
-                    <span className="text-gray-400 font-bold block">තනතුර:</span>
-                    <span className="font-semibold text-gray-700">{viewingMidwife.designation || 'Public Health Midwife (PHM)'}</span>
+                    <span className="text-slate-400 font-bold block">තනතුර:</span>
+                    <span className="font-semibold text-slate-700">{viewingMidwife.designation || 'Public Health Midwife (PHM)'}</span>
                   </div>
                   <div>
-                    <span className="text-gray-400 font-bold block">පත් කළ දිනය:</span>
-                    <span className="font-semibold text-gray-700">{viewingMidwife.appointmentDate || '—'}</span>
+                    <span className="text-slate-400 font-bold block">පත් කළ දිනය:</span>
+                    <span className="font-semibold text-slate-700">{viewingMidwife.appointmentDate || '—'}</span>
                   </div>
                 </div>
               </div>
 
               {/* Jurisdiction & Coverage */}
-              <div className="bg-gray-50/70 p-4 rounded-2xl border border-gray-100 space-y-3">
-                <h4 className="text-xs font-black text-gray-700 uppercase tracking-wider flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
+              <div className="bg-blue-50/40 p-5 rounded-2xl border border-blue-100 space-y-3">
+                <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
                   පරිපාලන බලප්‍රදේශය සහ ග්‍රාම නිලධාරී වසම් (Jurisdiction & Coverage)
                 </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-gray-400 font-bold block">දිස්ත්‍රික්කය (District):</span>
-                    <span className="font-bold text-gray-800">{viewingMidwife.district || findDistrictByMohArea(viewingMidwife.mohArea) || '—'}</span>
+                    <span className="text-slate-400 font-bold block">දිස්ත්‍රික්කය (District):</span>
+                    <span className="font-bold text-slate-900">{viewingMidwife.district || findDistrictByMohArea(viewingMidwife.mohArea) || '—'}</span>
                   </div>
                   <div>
-                    <span className="text-gray-400 font-bold block">MOH ප්‍රදේශය (MOH Area):</span>
-                    <span className="font-bold text-blue-600">{viewingMidwife.mohArea || '—'}</span>
+                    <span className="text-slate-400 font-bold block">MOH ප්‍රදේශය (MOH Area):</span>
+                    <span className="font-bold text-blue-700">{viewingMidwife.mohArea || '—'}</span>
                   </div>
                   <div className="sm:col-span-2">
-                    <span className="text-gray-400 font-bold block">PHM සේවා කලාපය (Service Area):</span>
-                    <span className="font-bold text-indigo-700">{viewingMidwife.serviceArea || '—'}</span>
+                    <span className="text-slate-400 font-bold block">PHM සේවා කලාපය (Service Area):</span>
+                    <span className="font-bold text-blue-800 text-base">{viewingMidwife.serviceArea || '—'}</span>
                   </div>
                   <div className="sm:col-span-2">
-                    <span className="text-gray-400 font-bold block mb-1.5">අයත් ග්‍රාම නිලධාරී වසම් (Assigned GN Divisions):</span>
+                    <span className="text-slate-400 font-bold block mb-2">අයත් ග්‍රාම නිලධාරී වසම් (Assigned GN Divisions):</span>
                     {viewingMidwife.gnDivisions ? (
-                      <div className="flex flex-wrap gap-1.5">
+                      <div className="flex flex-wrap gap-2">
                         {viewingMidwife.gnDivisions.split(',').map((gn, idx) => (
-                          <span key={idx} className="bg-white px-2.5 py-1 rounded-lg border border-gray-200 text-[11px] font-semibold text-gray-700 shadow-2xs">
+                          <span key={idx} className="bg-white px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 shadow-2xs">
                             📍 {gn.trim()}
                           </span>
                         ))}
                       </div>
                     ) : (
-                      <span className="text-gray-400 font-medium">වසම් දක්වා නැත</span>
+                      <span className="text-slate-400 font-medium">වසම් දක්වා නැත</span>
                     )}
                   </div>
                 </div>
               </div>
 
               {/* Contact Channels */}
-              <div className="bg-gray-50/70 p-4 rounded-2xl border border-gray-100 space-y-3">
-                <h4 className="text-xs font-black text-gray-700 uppercase tracking-wider flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
+              <div className="bg-blue-50/40 p-5 rounded-2xl border border-blue-100 space-y-3">
+                <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
                   සම්බන්ධීකරණ තොරතුරු (Communication Channels)
                 </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-gray-400 font-bold block">ජංගම දුරකථන අංකය:</span>
+                    <span className="text-slate-400 font-bold block">ජංගම දුරකථන අංකය:</span>
                     {viewingMidwife.phone ? (
-                      <a href={`tel:${viewingMidwife.phone}`} className="font-bold text-blue-600 hover:underline flex items-center gap-1">
+                      <a href={`tel:${viewingMidwife.phone}`} className="font-bold text-blue-700 hover:underline flex items-center gap-1">
                         📞 {viewingMidwife.phone}
                       </a>
-                    ) : <span className="text-gray-400">නොදක්වා ඇත</span>}
+                    ) : <span className="text-slate-400">නොදක්වා ඇත</span>}
                   </div>
                   <div>
-                    <span className="text-gray-400 font-bold block">රාජකාරි ඊමේල් ලිපිනය:</span>
+                    <span className="text-slate-400 font-bold block">රාජකාරි ඊමේල් ලිපිනය:</span>
                     {viewingMidwife.email ? (
-                      <a href={`mailto:${viewingMidwife.email}`} className="font-semibold text-blue-600 hover:underline flex items-center gap-1 font-mono">
+                      <a href={`mailto:${viewingMidwife.email}`} className="font-semibold text-blue-700 hover:underline flex items-center gap-1 font-mono">
                         ✉️ {viewingMidwife.email}
                       </a>
-                    ) : <span className="text-gray-400">නොදක්වා ඇත</span>}
+                    ) : <span className="text-slate-400">නොදක්වා ඇත</span>}
                   </div>
                 </div>
               </div>
 
-              <div className="bg-amber-50/80 p-3.5 rounded-2xl border border-amber-200 text-xs text-amber-800 flex items-start gap-2.5">
-                <span className="text-base mt-0.5">ℹ️</span>
+              <div className="bg-amber-50/80 p-4 rounded-2xl border border-amber-200 text-xs sm:text-sm text-amber-900 flex items-start gap-3">
+                <span className="text-lg mt-0.5">ℹ️</span>
                 <span className="leading-relaxed">
                   <strong>Super Admin ප්‍රතිපත්තිය:</strong> පවුල් සෞඛ්‍ය නිලධාරිනියන් (PHM) ලියාපදිංචි කිරීම සහ සංස්කරණය අදාළ MOH කාර්යාල මඟින් සිදු කෙරේ. Super Admin හට රට පුරා නිලධාරිනියන්ගේ දත්ත පරීක්ෂාව සහ අවශ්‍ය විට පද්ධතියෙන් ඉවත් කිරීම (Delete) සිදු කළ හැක.
                 </span>
@@ -326,21 +326,21 @@ const ManageMidwives = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
+            <div className="p-4 sm:p-5 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
               <button
                 onClick={() => {
                   const target = viewingMidwife;
                   setViewingMidwife(null);
                   setShowDeleteModal(target);
                 }}
-                className="px-4 py-2.5 bg-red-50 hover:bg-red-600 hover:text-white text-red-600 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center gap-1.5"
+                className="px-5 py-2.5 bg-red-50 hover:bg-red-600 hover:text-white text-red-600 text-sm font-bold rounded-xl transition-all shadow-sm flex items-center gap-1.5"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                නිලධාරිනිය ඉවත් කරන්න (Delete Midwife)
+                නිලධාරිනිය ඉවත් කරන්න (Delete)
               </button>
               <button 
                 onClick={() => setViewingMidwife(null)}
-                className="px-6 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl shadow-md transition-all"
+                className="px-6 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-sm font-bold rounded-xl shadow-md transition-all"
               >
                 වසන්න (Close)
               </button>
@@ -351,21 +351,21 @@ const ManageMidwives = () => {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-gray-100 text-center animate-in zoom-in-95 duration-200">
-            <div className="bg-red-100 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-red-600 shadow-inner">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-blue-950/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-7 max-w-md w-full shadow-2xl border border-blue-100 text-center animate-in zoom-in-95 duration-200">
+            <div className="bg-red-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-red-600 shadow-inner">
               <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </div>
-            <h3 className="text-xl font-black text-gray-800 tracking-tight">පවුල් සෞඛ්‍ය නිලධාරිනිය ඉවත් කරන්නද?</h3>
-            <p className="text-xs text-gray-500 font-medium mt-1">
+            <h3 className="text-xl font-black text-slate-900 tracking-tight">පවුල් සෞඛ්‍ය නිලධාරිනිය ඉවත් කරන්නද?</h3>
+            <p className="text-xs font-bold text-slate-400 mt-1">
               මෙම නිලධාරිනියගේ ගිණුම හා සේවා පැවරුම් පද්ධතියෙන් ස්ථිරවම ඉවත් කරනු ලැබේ.
             </p>
             
-            <div className="bg-gray-50 p-3.5 rounded-2xl my-4 text-left border border-gray-100 text-xs">
-              <div className="font-bold text-gray-800">{showDeleteModal.fullName}</div>
-              <div className="text-gray-500 font-mono text-[11px] mt-0.5">
+            <div className="bg-slate-50 p-4 rounded-2xl my-4 text-left border border-slate-100 text-sm">
+              <div className="font-bold text-slate-900">{showDeleteModal.fullName}</div>
+              <div className="text-slate-500 font-mono text-xs mt-0.5">
                 ID: {showDeleteModal.employeeId || '—'} | MOH: {showDeleteModal.mohArea || '—'}
               </div>
             </div>
@@ -373,7 +373,7 @@ const ManageMidwives = () => {
             <div className="flex space-x-3">
               <button 
                 onClick={() => setShowDeleteModal(null)} 
-                className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold text-xs uppercase transition-all"
+                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs uppercase transition-all"
               >
                 නැත (Cancel)
               </button>
@@ -389,17 +389,17 @@ const ManageMidwives = () => {
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Executive Header Banner */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white p-8 rounded-3xl shadow-xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Executive Header Banner (Blue & White Theme) */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-950 text-white p-6 sm:p-8 lg:p-10 rounded-3xl shadow-2xl border border-blue-800/40 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
           <div className="relative z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-bold mb-2 border border-indigo-400/20">
-              <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-500/20 text-blue-200 text-xs sm:text-sm font-bold mb-2 border border-blue-400/20">
+              <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
               National Midwifery Directory & PHM Oversight
             </div>
-            <h1 className="text-3xl font-extrabold tracking-tight">පවුල් සෞඛ්‍ය සේවා නිලධාරීන් කළමනාකරණය</h1>
-            <p className="text-indigo-100/80 text-xs font-medium mt-1.5 max-w-2xl">
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight">පවුල් සෞඛ්‍ය සේවා නිලධාරීන් කළමනාකරණය</h1>
+            <p className="text-blue-100/80 text-xs sm:text-sm font-medium mt-1.5 max-w-2xl">
               දිවයිනේ සියලුම MOH කොට්ඨාසයන්හි සේවය කරන පවුල් සෞඛ්‍ය සේවා නිලධාරිනියන්ගේ (PHM) නාමාවලිය, සේවා කලාප සහ අධීක්ෂණය
             </p>
           </div>
@@ -407,7 +407,7 @@ const ManageMidwives = () => {
           <div className="relative z-10 flex items-center gap-3">
             <button 
               onClick={fetchMidwives}
-              className="bg-white/10 hover:bg-white/20 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/10 text-xs font-bold text-white transition-all flex items-center gap-2"
+              className="bg-white/10 hover:bg-white/20 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10 text-xs sm:text-sm font-bold text-white transition-all flex items-center gap-2 shadow-sm"
               title="දත්ත නැවුම් කරන්න (Refresh)"
             >
               <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -418,90 +418,90 @@ const ManageMidwives = () => {
           </div>
         </div>
 
-        {/* Live KPI Overview Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between">
+        {/* Live KPI Overview Cards (Blue & White) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="bg-white p-6 rounded-3xl border border-blue-100 shadow-sm flex items-center justify-between">
             <div>
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block">මුළු PHM නිලධාරිනියන්</span>
-              <span className="text-2xl sm:text-3xl font-black text-gray-800 mt-1 block">{stats.total}</span>
-              <span className="text-[10px] text-gray-500 font-semibold mt-0.5 block">Total Midwives</span>
+              <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">මුළු PHM නිලධාරිනියන්</span>
+              <span className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 mt-1 block">{stats.total}</span>
+              <span className="text-xs text-slate-500 font-semibold mt-0.5 block">Total Midwives</span>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-2xl shadow-inner">
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center text-3xl shadow-inner border border-blue-100">
               👩‍⚕️
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-3xl border border-blue-100 shadow-sm flex items-center justify-between">
+          <div className="bg-white p-6 rounded-3xl border border-blue-100 shadow-sm flex items-center justify-between">
             <div>
-              <span className="text-[10px] font-black text-blue-600 uppercase tracking-wider block">ක්‍රියාකාරී දිස්ත්‍රික්ක</span>
-              <span className="text-2xl sm:text-3xl font-black text-blue-700 mt-1 block">{stats.districtsCount} <span className="text-sm font-bold text-gray-400">/ 26</span></span>
-              <span className="text-[10px] text-blue-600/80 font-semibold mt-0.5 block">Active Districts</span>
+              <span className="text-xs font-black text-blue-700 uppercase tracking-wider block">ක්‍රියාකාරී දිස්ත්‍රික්ක</span>
+              <span className="text-2xl sm:text-3xl lg:text-4xl font-black text-blue-900 mt-1 block">{stats.districtsCount} <span className="text-sm font-bold text-slate-400">/ 26</span></span>
+              <span className="text-xs text-blue-700/80 font-semibold mt-0.5 block">Active Districts</span>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl shadow-inner">
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center text-2xl shadow-inner border border-blue-100">
               📍
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-3xl border border-emerald-100 shadow-sm flex items-center justify-between">
+          <div className="bg-white p-6 rounded-3xl border border-blue-100 shadow-sm flex items-center justify-between">
             <div>
-              <span className="text-[10px] font-black text-emerald-600 uppercase tracking-wider block">MOH ප්‍රදේශ ආවරණය</span>
-              <span className="text-2xl sm:text-3xl font-black text-emerald-700 mt-1 block">{stats.mohCount}</span>
-              <span className="text-[10px] text-emerald-600/80 font-semibold mt-0.5 block">MOH Areas Covered</span>
+              <span className="text-xs font-black text-blue-700 uppercase tracking-wider block">MOH ප්‍රදේශ ආවරණය</span>
+              <span className="text-2xl sm:text-3xl lg:text-4xl font-black text-blue-900 mt-1 block">{stats.mohCount}</span>
+              <span className="text-xs text-blue-700/80 font-semibold mt-0.5 block">MOH Areas Covered</span>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shadow-inner">
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center text-2xl shadow-inner border border-blue-100">
               🏥
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-3xl border border-purple-100 shadow-sm flex items-center justify-between">
+          <div className="bg-white p-6 rounded-3xl border border-blue-100 shadow-sm flex items-center justify-between">
             <div>
-              <span className="text-[10px] font-black text-purple-600 uppercase tracking-wider block">සේවා කලාප සංඛ්‍යාව</span>
-              <span className="text-2xl sm:text-3xl font-black text-purple-700 mt-1 block">{stats.serviceAreasCount}</span>
-              <span className="text-[10px] text-purple-600/80 font-semibold mt-0.5 block">PHM Divisions Assigned</span>
+              <span className="text-xs font-black text-blue-700 uppercase tracking-wider block">සේවා කලාප සංඛ්‍යාව</span>
+              <span className="text-2xl sm:text-3xl lg:text-4xl font-black text-blue-900 mt-1 block">{stats.serviceAreasCount}</span>
+              <span className="text-xs text-blue-700/80 font-semibold mt-0.5 block">PHM Divisions Assigned</span>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl shadow-inner">
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center text-2xl shadow-inner border border-blue-100">
               🗺️
             </div>
           </div>
         </div>
 
-        {/* Filter Toolbar Card */}
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4">
+        {/* Filter Toolbar Card (Blue & White) */}
+        <div className="bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-blue-100 space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-black text-gray-700 uppercase tracking-wider">දත්ත පෙරණය සහ සෙවීම (Filters & Search)</span>
+              <span className="text-sm font-black text-slate-800 uppercase tracking-wider">දත්ත පෙරණය සහ සෙවීම (Filters & Search)</span>
               {isFiltered && (
                 <button 
                   onClick={resetFilters}
-                  className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 underline ml-2"
+                  className="text-xs font-bold text-blue-700 hover:text-blue-800 underline ml-2"
                 >
                   පෙරහන් ඉවත් කරන්න (Reset)
                 </button>
               )}
             </div>
             <div className="flex items-center gap-2">
-              <span className="bg-indigo-50 text-indigo-800 text-xs font-bold px-3.5 py-1.5 rounded-full border border-indigo-200">
+              <span className="bg-blue-50 text-blue-800 text-xs sm:text-sm font-bold px-4 py-1.5 rounded-full border border-blue-200">
                 පෙරූ ප්‍රතිඵල: {filteredMidwives.length} / {midwives.length}
               </span>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             {/* Search */}
             <div>
-              <label className="block text-[10px] font-black text-gray-500 uppercase mb-1">සොයන්න (Search Name / NIC / ID / Area / Email)</label>
+              <label className="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">සොයන්න (Search Name / NIC / ID / Area / Email)</label>
               <div className="relative">
                 <input
                   type="text"
                   placeholder="නම, NIC, සේවක අංකය, කලාපය..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full p-2.5 pr-8 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
+                  className="w-full p-3.5 pr-9 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all"
                 />
                 {searchTerm && (
                   <button 
                     onClick={() => setSearchTerm('')}
-                    className="absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600 text-xs font-bold"
+                    className="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600 text-sm font-bold"
                   >
                     ✕
                   </button>
@@ -511,11 +511,11 @@ const ManageMidwives = () => {
 
             {/* Filter District */}
             <div>
-              <label className="block text-[10px] font-black text-gray-500 uppercase mb-1">දිස්ත්‍රික්කය (District)</label>
+              <label className="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">දිස්ත්‍රික්කය (District)</label>
               <select
                 value={selectedDistrict}
                 onChange={handleDistrictChange}
-                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
+                className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all"
               >
                 <option value="All">සියලුම දිස්ත්‍රික්ක (All Districts)</option>
                 {DISTRICTS.map(dist => (
@@ -526,13 +526,13 @@ const ManageMidwives = () => {
 
             {/* Filter MOH Area */}
             <div>
-              <label className="block text-[10px] font-black text-gray-500 uppercase mb-1">MOH ප්‍රදේශය (MOH Area)</label>
+              <label className="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">MOH ප්‍රදේශය (MOH Area)</label>
               <select
                 value={selectedMohArea}
                 onChange={(e) => setSelectedMohArea(e.target.value)}
                 disabled={selectedDistrict === 'All'}
-                className={`w-full p-2.5 border rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all ${
-                  selectedDistrict === 'All' ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-gray-50 border-gray-200'
+                className={`w-full p-3.5 border rounded-2xl text-sm font-bold focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all ${
+                  selectedDistrict === 'All' ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-slate-50 border-slate-200'
                 }`}
               >
                 <option value="All">
@@ -546,19 +546,19 @@ const ManageMidwives = () => {
           </div>
         </div>
 
-        {/* Midwives Table Card */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+        {/* Midwives Table Card (Blue & White) */}
+        <div className="bg-white rounded-3xl shadow-sm border border-blue-100 overflow-hidden">
           {loading ? (
             <div className="py-24 text-center space-y-3">
-              <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-              <p className="text-indigo-600 font-bold text-sm">දත්ත පද්ධතියෙන් ලබාගනිමින් පවතී...</p>
-              <p className="text-xs text-gray-400">Loading Midwifery Directory...</p>
+              <div className="w-14 h-14 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <p className="text-blue-900 font-bold text-base">දත්ත පද්ධතියෙන් ලබාගනිමින් පවතී...</p>
+              <p className="text-xs text-slate-400">Loading Midwifery Directory...</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full table-auto border-collapse">
+              <table className="min-w-full table-auto border-collapse text-sm">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-gray-100 text-gray-500 uppercase tracking-wider text-[11px] font-black">
+                  <tr className="bg-slate-50 border-b border-slate-100 text-slate-600 uppercase tracking-wider text-xs font-black">
                     <th className="px-5 py-4 text-left">නිලධාරිනියගේ නම සහ හැඳුනුම් අංක</th>
                     <th className="px-4 py-4 text-left">දිස්ත්‍රික්කය & MOH ප්‍රදේශය</th>
                     <th className="px-4 py-4 text-left">සේවා කලාපය (PHM Area)</th>
@@ -566,24 +566,24 @@ const ManageMidwives = () => {
                     <th className="px-4 py-4 text-center">ක්‍රියාකාරකම් (Actions)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 text-xs text-gray-600">
+                <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
                   {filteredMidwives.length > 0 ? filteredMidwives.map((midwife) => {
                     const displayDistrict = midwife.district || findDistrictByMohArea(midwife.mohArea) || '—';
                     return (
-                      <tr key={midwife.id} className="hover:bg-indigo-50/20 transition duration-150">
+                      <tr key={midwife.id} className="hover:bg-blue-50/30 transition duration-150">
                         {/* Name & ID */}
                         <td className="px-5 py-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center text-lg font-black shrink-0">
+                          <div className="flex items-center space-x-3.5">
+                            <div className="w-11 h-11 rounded-2xl bg-blue-50 text-blue-700 border border-blue-100 flex items-center justify-center text-xl font-black shrink-0">
                               👩‍⚕️
                             </div>
                             <div>
-                              <div className="font-bold text-gray-900 text-sm flex items-center gap-1.5">
+                              <div className="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-1.5">
                                 <span>{midwife.fullName}</span>
                               </div>
-                              <div className="text-[11px] text-gray-400 font-mono font-medium flex items-center gap-2 mt-0.5">
+                              <div className="text-xs text-slate-400 font-mono font-medium flex items-center gap-2 mt-0.5">
                                 {midwife.employeeId && (
-                                  <span className="bg-indigo-50 text-indigo-700 font-bold px-1.5 py-0.2 rounded border border-indigo-100">
+                                  <span className="bg-blue-50 text-blue-800 font-bold px-2 py-0.5 rounded border border-blue-200">
                                     ID: {midwife.employeeId}
                                   </span>
                                 )}
@@ -595,23 +595,23 @@ const ManageMidwives = () => {
 
                         {/* District & MOH Area */}
                         <td className="px-4 py-4 whitespace-nowrap">
-                          <div className="font-bold text-gray-800 flex items-center gap-1">
+                          <div className="font-bold text-slate-900 flex items-center gap-1">
                             <span className="text-blue-500">📍</span>
                             <span>{displayDistrict}</span>
                           </div>
-                          <div className="text-xs font-semibold text-blue-600 mt-0.5">
+                          <div className="text-xs font-semibold text-blue-700 mt-0.5">
                             {midwife.mohArea || "—"}
                           </div>
                         </td>
 
                         {/* Service Area & GN */}
                         <td className="px-4 py-4">
-                          <span className="inline-block bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg border border-indigo-100 text-xs font-bold">
+                          <span className="inline-block bg-blue-50 text-blue-800 px-3 py-1 rounded-xl border border-blue-100 text-xs font-bold">
                             {midwife.serviceArea || "සේවා කලාපය දක්වා නැත"}
                           </span>
                           {midwife.gnDivisions && (
-                            <div className="text-[11px] text-gray-400 mt-1 truncate max-w-xs" title={midwife.gnDivisions}>
-                              GN: <span className="text-gray-600 font-medium">{midwife.gnDivisions}</span>
+                            <div className="text-xs text-slate-400 mt-1 truncate max-w-xs" title={midwife.gnDivisions}>
+                              GN: <span className="text-slate-600 font-semibold">{midwife.gnDivisions}</span>
                             </div>
                           )}
                         </td>
@@ -619,14 +619,14 @@ const ManageMidwives = () => {
                         {/* Contact */}
                         <td className="px-4 py-4 whitespace-nowrap">
                           {midwife.phone ? (
-                            <a href={`tel:${midwife.phone}`} className="font-bold text-gray-800 hover:text-blue-600 flex items-center gap-1">
+                            <a href={`tel:${midwife.phone}`} className="font-bold text-slate-800 hover:text-blue-700 flex items-center gap-1 text-sm">
                               📞 {midwife.phone}
                             </a>
                           ) : (
-                            <div className="text-gray-400">දුරකථන නැත</div>
+                            <div className="text-slate-400 text-xs">දුරකථන නැත</div>
                           )}
                           {midwife.email && (
-                            <a href={`mailto:${midwife.email}`} className="text-[10px] text-blue-600 hover:underline font-mono block mt-0.5">
+                            <a href={`mailto:${midwife.email}`} className="text-xs text-blue-600 hover:underline font-mono block mt-0.5">
                               {midwife.email}
                             </a>
                           )}
@@ -639,16 +639,16 @@ const ManageMidwives = () => {
                             <button
                               onClick={() => setViewingMidwife(midwife)}
                               title="සම්පූර්ණ තොරතුරු බලන්න (View Profile Dossier)"
-                              className="px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1"
+                              className="px-3.5 py-2 bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
                             >
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                               <span>Dossier</span>
                             </button>
 
                             {/* Delete */}
                             <button 
                               onClick={() => setShowDeleteModal(midwife)}
-                              className="p-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-xl transition-all shadow-sm"
+                              className="p-2 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-xl transition-all shadow-sm"
                               title="නිලධාරිනිය ඉවත් කරන්න (Delete Midwife)"
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -661,16 +661,16 @@ const ManageMidwives = () => {
                     );
                   }) : (
                     <tr>
-                      <td colSpan="5" className="py-20 text-center text-gray-400">
-                        <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-3 text-3xl">
+                      <td colSpan="5" className="py-20 text-center text-slate-400">
+                        <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-3 text-3xl">
                           🔍
                         </div>
-                        <div className="text-base font-bold text-gray-700">කිසිදු නිලධාරිනියකගේ දත්ත හමු නොවීය.</div>
-                        <div className="text-xs text-gray-400 mt-1">No registered midwives matching the filter criteria found.</div>
+                        <div className="text-base font-bold text-slate-800">කිසිදු නිලධාරිනියකගේ දත්ත හමු නොවීය.</div>
+                        <div className="text-xs text-slate-400 mt-1">No registered midwives matching the filter criteria found.</div>
                         {isFiltered && (
                           <button 
                             onClick={resetFilters}
-                            className="mt-3 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-xs font-bold hover:bg-indigo-100 transition-all"
+                            className="mt-3 px-4 py-2 bg-blue-50 text-blue-700 rounded-xl text-xs font-bold hover:bg-blue-100 transition-all"
                           >
                             සියලුම පෙරහන් ඉවත් කරන්න (Reset All Filters)
                           </button>

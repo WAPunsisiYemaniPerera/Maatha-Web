@@ -127,84 +127,112 @@ const AddMOHAdmin = () => {
       // 1. Strict NIC Uniqueness Check across the entire health system
       const nicCheck = await checkNICUniqueness(db, cleanNIC, editingId);
       if (!nicCheck.isUnique) {
-        showToast(`මෙම ජාතික හැඳුනුම්පත් අංකය (NIC: ${cleanNIC}) දැනටමත් ${nicCheck.role} සඳහා ලියාපදිංචි කර ඇත. එක් අයෙකුට ලියාපදිංචි විය හැක්කේ එක් වරක් පමණි.`, 'error');
+        showToast(`මෙම හැඳුනුම්පත් අංකය (NIC: ${cleanNIC}) දැනටමත් පද්ධතියේ ${nicCheck.role} සඳහා ලියාපදිංචි කර ඇත!`, 'error');
         setLoading(false);
         return;
       }
 
-      // 2. Strict Email Uniqueness Check across the entire health system
-      const emailUnique = await checkEmailUniqueness(db, cleanEmail, editingId);
-      if (!emailUnique) {
-        showToast(`මෙම ඊමේල් ලිපිනය (${cleanEmail}) දැනටමත් පද්ධතියේ ලියාපදිංචි කර ඇත. කරුණාකර වෙනත් ඊමේල් ලිපිනයක් භාවිතා කරන්න.`, 'error');
+      // 2. Strict Email Uniqueness Check across the system
+      const isEmailUnique = await checkEmailUniqueness(db, cleanEmail, editingId);
+      if (!isEmailUnique) {
+        showToast(`මෙම ඊමේල් ලිපිනය (${cleanEmail}) දැනටමත් වෙනත් ගිණුමක් සඳහා ලියාපදිංචි කර ඇත!`, 'error');
         setLoading(false);
         return;
       }
 
       if (editingId) {
-        await updateDoc(doc(db, "moh_admins", editingId), {
+        // Edit Mode
+        const updatePayload = {
           fullName: formData.fullName.trim(),
           nic: cleanNIC,
-          slmcNumber: formData.slmcNumber.trim(),
+          slmcNumber: (formData.slmcNumber || '').trim(),
           designation: formData.designation,
           gender: formData.gender,
-          phone: formData.phone.trim(),
-          officePhone: formData.officePhone.trim(),
-          officeAddress: formData.officeAddress.trim(),
+          phone: (formData.phone || '').trim(),
+          officePhone: (formData.officePhone || '').trim(),
+          email: cleanEmail,
+          officeAddress: (formData.officeAddress || '').trim(),
           district: formData.district,
           mohArea: formData.mohArea,
           appointmentDate: formData.appointmentDate,
           status: formData.status,
           updatedAt: new Date()
+        };
+
+        await updateDoc(doc(db, "moh_admins", editingId), updatePayload);
+        
+        // Also update users collection
+        await updateDoc(doc(db, "users", editingId), {
+          fullName: formData.fullName.trim(),
+          email: cleanEmail,
+          nic: cleanNIC,
+          district: formData.district,
+          mohArea: formData.mohArea,
+          updatedAt: new Date()
         });
-        showToast("MOH නිලධාරී විස්තර සාර්ථකව යාවත්කාලීන කරන ලදී! (Officer Details Updated)");
+
+        showToast("MOH නිලධාරී තොරතුරු සාර්ථකව යාවත්කාලීන කරන ලදී! (Officer Updated)");
+        setEditingId(null);
+        setFormData(initialFormState);
+        fetchAdmins();
       } else {
-        // Password strength validation
-        const strength = evaluatePasswordStrength(formData.password);
-        if (!strength.isValid || strength.score < 3) {
-          showToast("මුරපදය ප්‍රමාණවත් තරම් ශක්තිමත් නැත. අවම වශයෙන් අකුරු 8ක්, ලොකු/කුඩා අකුරු, අංක සහ විශේෂ සංකේත යොදන්න.", 'error');
+        // Create Mode - Requires strong encrypted password validation
+        if (!formData.password) {
+          showToast("කරුණාකර පිවිසුම් මුරපදයක් (Password) ඇතුළත් කරන්න", 'error');
           setLoading(false);
           return;
         }
 
-        // Firebase Auth user creation (scrypt salt & hash)
-        const userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, formData.password);
-        const uid = userCredential.user.uid;
+        const pwdEval = evaluatePasswordStrength(formData.password);
+        if (!pwdEval.isValid) {
+          showToast("මුරපදය ප්‍රමාණවත් තරම් ශක්තිමත් නැත. කරුණාකර අවම අක්ෂර 8ක්, අංක සහ සංකේත ඇතුළත් කරන්න.", 'error');
+          setLoading(false);
+          return;
+        }
 
-        // Note: Password is encrypted & salted on Firebase Auth via scrypt. NEVER stored in plaintext in Firestore!
-        await setDoc(doc(db, "users", uid), {
-          email: cleanEmail,
-          role: "moh_admin",
+        // Firebase Auth User Creation (Scrypt password encryption with Salt & Pepper)
+        const userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, formData.password);
+        const user = userCredential.user;
+
+        // Save to users collection
+        await setDoc(doc(db, "users", user.uid), {
           fullName: formData.fullName.trim(),
+          email: cleanEmail,
           nic: cleanNIC,
-          uid,
+          role: "moh_admin",
+          district: formData.district,
+          mohArea: formData.mohArea,
           createdAt: new Date()
         });
 
-        await setDoc(doc(db, "moh_admins", uid), {
+        // Save detailed profile to moh_admins collection (Zero plaintext passwords saved)
+        await setDoc(doc(db, "moh_admins", user.uid), {
           fullName: formData.fullName.trim(),
           nic: cleanNIC,
-          slmcNumber: formData.slmcNumber.trim(),
+          slmcNumber: (formData.slmcNumber || '').trim(),
           designation: formData.designation,
           gender: formData.gender,
-          phone: formData.phone.trim(),
-          officePhone: formData.officePhone.trim(),
+          phone: (formData.phone || '').trim(),
+          officePhone: (formData.officePhone || '').trim(),
           email: cleanEmail,
-          officeAddress: formData.officeAddress.trim(),
+          officeAddress: (formData.officeAddress || '').trim(),
           district: formData.district,
           mohArea: formData.mohArea,
           appointmentDate: formData.appointmentDate,
-          status: formData.status || 'Active',
-          adminId: uid,
+          status: formData.status,
           createdAt: new Date()
         });
-        showToast("MOH නිලධාරියා සාර්ථකව ලියාපදිංචි කරන ලදී! (MOH Officer Registered Securely)");
+
+        showToast("MOH වෛද්‍ය/පාලක නිලධාරියා සාර්ථකව ලියාපදිංචි කරන ලදී! (MOH Admin Registered)");
+        setFormData(initialFormState);
+        fetchAdmins();
       }
-      setFormData(initialFormState);
-      setEditingId(null);
-      fetchAdmins();
     } catch (error) {
-      showToast(formatAuthError(error), 'error');
+      console.error("Submission error:", error);
+      const friendlyError = formatAuthError(error);
+      showToast(friendlyError, 'error');
     }
+
     setLoading(false);
   };
 
@@ -271,118 +299,118 @@ const AddMOHAdmin = () => {
     <AdminLayout>
       {/* Officer Full Profile Dossier Modal */}
       {viewingAdmin && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-300">
-            {/* Modal Header */}
-            <div className="bg-gradient-to-r from-emerald-700 via-teal-700 to-cyan-800 p-6 text-white relative">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-blue-950/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-3xl w-full shadow-2xl overflow-hidden border border-blue-100 animate-in zoom-in-95 duration-300">
+            {/* Modal Header (Blue & White) */}
+            <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-950 p-6 sm:p-8 text-white relative">
               <button 
                 onClick={() => setViewingAdmin(null)}
-                className="absolute top-5 right-5 text-white/80 hover:text-white bg-black/20 hover:bg-black/40 rounded-full p-2 transition-all"
+                className="absolute top-5 right-5 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2.5 transition-all"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-              <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-2xl font-black shadow-inner">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="w-18 h-18 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-3xl font-black shadow-inner shrink-0">
                   🩺
                 </div>
                 <div>
-                  <div className="inline-block px-2.5 py-0.5 rounded-full bg-emerald-500/30 text-emerald-200 text-[10px] font-black uppercase tracking-wider mb-1 border border-emerald-400/30">
+                  <div className="inline-block px-3 py-1 rounded-full bg-blue-500/30 text-blue-200 text-xs font-black uppercase tracking-wider mb-1.5 border border-blue-400/30">
                     {viewingAdmin.designation || 'Medical Officer of Health'}
                   </div>
-                  <h3 className="text-2xl font-bold tracking-tight">{viewingAdmin.fullName}</h3>
-                  <p className="text-xs text-teal-100 font-medium">{viewingAdmin.mohArea} MOH Division, {viewingAdmin.district || findDistrictByMohArea(viewingAdmin.mohArea)}</p>
+                  <h3 className="text-2xl sm:text-3xl font-black tracking-tight">{viewingAdmin.fullName}</h3>
+                  <p className="text-sm text-blue-200 font-medium mt-0.5">{viewingAdmin.mohArea} MOH Division, {viewingAdmin.district || findDistrictByMohArea(viewingAdmin.mohArea)}</p>
                 </div>
               </div>
             </div>
 
-            {/* Modal Content / Details Grid */}
-            <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar">
+            {/* Modal Content */}
+            <div className="p-6 sm:p-8 space-y-6 max-h-[72vh] overflow-y-auto custom-scrollbar">
               {/* Status & SLMC Quick Badge */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-center">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block">සේවා තත්ත්වය (Status)</span>
-                  <span className={`inline-block mt-1 px-3 py-0.5 rounded-full text-xs font-bold ${
-                    viewingAdmin.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+              <div className="grid grid-cols-3 gap-3.5">
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center">
+                  <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">සේවා තත්ත්වය</span>
+                  <span className={`inline-block mt-1 px-3 py-1 rounded-full text-xs sm:text-sm font-bold ${
+                    viewingAdmin.status === 'Active' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
                   }`}>
                     {viewingAdmin.status || 'Active'}
                   </span>
                 </div>
 
-                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-center">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block">SLMC ලියාපදිංචිය</span>
-                  <span className="text-xs font-bold text-slate-800 mt-1 block font-mono">{viewingAdmin.slmcNumber || 'නැත (N/A)'}</span>
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center">
+                  <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">SLMC ලියාපදිංචිය</span>
+                  <span className="text-sm sm:text-base font-black text-slate-800 mt-1 block font-mono">{viewingAdmin.slmcNumber || 'නැත (N/A)'}</span>
                 </div>
 
-                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-center">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block">ජාතික හැඳුනුම්පත (NIC)</span>
-                  <span className="text-xs font-bold text-slate-800 mt-1 block font-mono">{viewingAdmin.nic || 'නැත (N/A)'}</span>
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center">
+                  <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">ජාතික හැඳුනුම්පත (NIC)</span>
+                  <span className="text-sm sm:text-base font-black text-slate-800 mt-1 block font-mono">{viewingAdmin.nic || 'නැත (N/A)'}</span>
                 </div>
               </div>
 
               {/* Personal & Professional Section */}
-              <div className="bg-gray-50/70 p-4 rounded-2xl border border-gray-100 space-y-3">
-                <h4 className="text-xs font-black text-gray-700 uppercase tracking-wider flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
+              <div className="bg-blue-50/40 p-5 rounded-2xl border border-blue-100 space-y-3">
+                <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
                   පෞද්ගලික සහ වෘත්තීය විස්තර (Personal & Professional Profile)
                 </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-gray-400 font-bold block">සම්පූර්ණ නම:</span>
-                    <span className="font-bold text-gray-800">{viewingAdmin.fullName}</span>
+                    <span className="text-slate-400 font-bold block">සම්පූර්ණ නම:</span>
+                    <span className="font-bold text-slate-900 text-base">{viewingAdmin.fullName}</span>
                   </div>
                   <div>
-                    <span className="text-gray-400 font-bold block">ස්ත්‍රී / පුරුෂ භාවය (Gender):</span>
-                    <span className="font-semibold text-gray-700">{viewingAdmin.gender || 'නොදක්වා ඇත'}</span>
+                    <span className="text-slate-400 font-bold block">ස්ත්‍රී / පුරුෂ භාවය (Gender):</span>
+                    <span className="font-semibold text-slate-700">{viewingAdmin.gender || 'නොදක්වා ඇත'}</span>
                   </div>
                   <div>
-                    <span className="text-gray-400 font-bold block">තනතුර (Designation):</span>
-                    <span className="font-semibold text-gray-700">{viewingAdmin.designation || 'Medical Officer of Health (MOH)'}</span>
+                    <span className="text-slate-400 font-bold block">තනතුර (Designation):</span>
+                    <span className="font-semibold text-slate-700">{viewingAdmin.designation || 'Medical Officer of Health (MOH)'}</span>
                   </div>
                   <div>
-                    <span className="text-gray-400 font-bold block">පත් කළ දිනය (Appointment Date):</span>
-                    <span className="font-semibold text-gray-700">{viewingAdmin.appointmentDate || '—'}</span>
+                    <span className="text-slate-400 font-bold block">පත් කළ දිනය (Appointment Date):</span>
+                    <span className="font-semibold text-slate-700">{viewingAdmin.appointmentDate || '—'}</span>
                   </div>
                 </div>
               </div>
 
               {/* Contact & Office Section */}
-              <div className="bg-gray-50/70 p-4 rounded-2xl border border-gray-100 space-y-3">
-                <h4 className="text-xs font-black text-gray-700 uppercase tracking-wider flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-blue-600"></span>
+              <div className="bg-blue-50/40 p-5 rounded-2xl border border-blue-100 space-y-3">
+                <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
                   සම්බන්ධීකරණ සහ කාර්යාල තොරතුරු (Contact & Office Details)
                 </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-gray-400 font-bold block">ජංගම දුරකථන අංකය:</span>
-                    <a href={`tel:${viewingAdmin.phone}`} className="font-bold text-blue-600 hover:underline">{viewingAdmin.phone || '—'}</a>
+                    <span className="text-slate-400 font-bold block">ජංගම දුරකථන අංකය:</span>
+                    <a href={`tel:${viewingAdmin.phone}`} className="font-bold text-blue-700 hover:underline">{viewingAdmin.phone || '—'}</a>
                   </div>
                   <div>
-                    <span className="text-gray-400 font-bold block">කාර්යාල දුරකථන අංකය:</span>
-                    <span className="font-semibold text-gray-700">{viewingAdmin.officePhone || '—'}</span>
+                    <span className="text-slate-400 font-bold block">කාර්යාල දුරකථන අංකය:</span>
+                    <span className="font-semibold text-slate-700">{viewingAdmin.officePhone || '—'}</span>
                   </div>
                   <div>
-                    <span className="text-gray-400 font-bold block">රාජකාරි ඊමේල් ලිපිනය:</span>
-                    <a href={`mailto:${viewingAdmin.email}`} className="font-bold text-blue-600 hover:underline">{viewingAdmin.email}</a>
+                    <span className="text-slate-400 font-bold block">රාජකාරි ඊමේල් ලිපිනය:</span>
+                    <a href={`mailto:${viewingAdmin.email}`} className="font-bold text-blue-700 hover:underline font-mono">{viewingAdmin.email}</a>
                   </div>
                   <div>
-                    <span className="text-gray-400 font-bold block">MOH කාර්යාල ලිපිනය:</span>
-                    <span className="font-semibold text-gray-700">{viewingAdmin.officeAddress || '—'}</span>
+                    <span className="text-slate-400 font-bold block">MOH කාර්යාල ලිපිනය:</span>
+                    <span className="font-semibold text-slate-700">{viewingAdmin.officeAddress || '—'}</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-end space-x-3">
+            <div className="p-4 sm:p-5 bg-slate-50 border-t border-slate-100 flex justify-end space-x-3">
               <button 
                 onClick={() => {
                   const adminToEdit = viewingAdmin;
                   setViewingAdmin(null);
                   startEdit(adminToEdit);
                 }}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-sm"
+                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-md"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -391,7 +419,7 @@ const AddMOHAdmin = () => {
               </button>
               <button 
                 onClick={() => setViewingAdmin(null)}
-                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold rounded-xl transition-all"
+                className="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-bold rounded-xl transition-all"
               >
                 වසන්න (Close)
               </button>
@@ -402,20 +430,20 @@ const AddMOHAdmin = () => {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-gray-100 text-center animate-in zoom-in-95 duration-200">
-            <div className="bg-red-100 w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 text-red-600 shadow-inner">
-              <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-blue-950/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-7 max-w-sm w-full shadow-2xl border border-blue-100 text-center animate-in zoom-in-95 duration-200">
+            <div className="bg-red-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-red-600 shadow-inner">
+              <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </div>
-            <h3 className="text-lg font-bold text-gray-800">MOH නිලධාරියා ඉවත් කරන්නද?</h3>
-            <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mt-1 mb-6">Are you sure you want to remove this officer?</p>
+            <h3 className="text-xl font-black text-slate-900">MOH නිලධාරියා ඉවත් කරන්නද?</h3>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1 mb-6">Are you sure you want to remove this officer?</p>
             <div className="flex space-x-3">
-              <button onClick={() => setShowDeleteModal(null)} className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold text-xs uppercase transition-all">
+              <button onClick={() => setShowDeleteModal(null)} className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs uppercase transition-all">
                 නැත (Cancel)
               </button>
-              <button onClick={confirmDelete} className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs uppercase shadow-lg shadow-red-200 transition-all">
+              <button onClick={confirmDelete} className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs uppercase shadow-lg shadow-red-200 transition-all">
                 ඔව් (Delete)
               </button>
             </div>
@@ -426,9 +454,9 @@ const AddMOHAdmin = () => {
       {/* Toast Notification */}
       {message && (
         <div className={`fixed top-5 right-5 z-[130] text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center space-x-4 animate-in slide-in-from-right duration-500 ${
-          messageType === 'error' ? 'bg-red-900 border-l-4 border-red-500' : 'bg-slate-900 border-l-4 border-emerald-500'
+          messageType === 'error' ? 'bg-red-900 border-l-4 border-red-500' : 'bg-slate-900 border-l-4 border-blue-500'
         }`}>
-          <div className={`rounded-full p-1.5 ${messageType === 'error' ? 'bg-red-500' : 'bg-emerald-500'}`}>
+          <div className={`rounded-full p-1.5 ${messageType === 'error' ? 'bg-red-500' : 'bg-blue-500'}`}>
             <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               {messageType === 'error' ? (
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
@@ -441,45 +469,46 @@ const AddMOHAdmin = () => {
         </div>
       )}
 
-      <div className="max-w-6xl mx-auto space-y-8">
-        {/* Header Title */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-gradient-to-r from-emerald-800 via-teal-800 to-slate-900 text-white p-8 rounded-3xl shadow-xl">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold mb-2 border border-emerald-400/20">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header Title (Blue and White) */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-950 text-white p-6 sm:p-8 lg:p-10 rounded-3xl shadow-2xl border border-blue-800/40 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="relative z-10">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-500/20 text-blue-200 text-xs sm:text-sm font-bold mb-2 border border-blue-400/20">
+              <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
               MOH Administration & Officer Registry
             </div>
-            <h1 className="text-3xl font-extrabold tracking-tight">සෞඛ්‍ය වෛද්‍ය නිලධාරී (MOH) කළමනාකරණය</h1>
-            <p className="text-emerald-100/70 text-xs font-medium mt-1">
-              සෞඛ්‍ය වෛද්‍ය නිලධාරීන්ගේ සම්පූර්ණ තොරතුරු (NIC, SLMC No, රාජකාරි බලප්‍රදේශය) ලියාපදිංචිය සහ අධීක්ෂණය
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight">සෞඛ්‍ය වෛද්‍ය නිලධාරී (MOH) කළමනාකරණය</h1>
+            <p className="text-blue-100/80 text-xs sm:text-sm font-medium mt-1.5 max-w-2xl">
+              සෞඛ්‍ය වෛද්‍ය නිලධාරීන්ගේ සම්පූර්ණ තොරතුරු (NIC, SLMC No, රාජකාරි බලප්‍රදේශය) ලියාපදිංචිය, සංස්කරණය සහ අධීක්ෂණය
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/10 text-center">
-              <span className="text-[10px] font-black text-emerald-200 uppercase tracking-wider block">ලියාපදිංචි නිලධාරීන්</span>
-              <span className="text-2xl font-black text-white">{admins.length}</span>
+          <div className="relative z-10 flex items-center gap-3">
+            <div className="bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10 text-center">
+              <span className="text-xs font-black text-blue-200 uppercase tracking-wider block">ලියාපදිංචි නිලධාරීන්</span>
+              <span className="text-3xl font-black text-white">{admins.length}</span>
             </div>
           </div>
         </div>
 
-        {/* Registration / Edit Form */}
-        <div className="bg-white p-8 rounded-3xl shadow-md border border-gray-100 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500"></div>
+        {/* Registration / Edit Form (Blue & White) */}
+        <div className="bg-white p-6 sm:p-8 lg:p-10 rounded-3xl shadow-sm border border-blue-100 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-400"></div>
 
-          <div className="mb-6 border-b border-gray-100 pb-4 flex justify-between items-center">
+          <div className="mb-8 border-b border-slate-100 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-bold text-gray-800">
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                 {editingId ? "MOH නිලධාරී තොරතුරු සංස්කරණය" : "අලුත් MOH වෛද්‍ය/පාලක නිලධාරියෙකු ලියාපදිංචි කිරීම"}
               </h2>
-              <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mt-0.5">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1">
                 {editingId ? "Update MOH Officer Dossier" : "Register New Medical Officer of Health (MOH Officer)"}
               </p>
             </div>
             {editingId && (
               <button 
                 onClick={cancelEdit}
-                className="text-xs font-bold text-gray-500 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-xl transition-all"
+                className="text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-xl transition-all w-fit"
               >
                 සංස්කරණය අවලංගු කරන්න (Cancel)
               </button>
@@ -488,169 +517,107 @@ const AddMOHAdmin = () => {
 
           <form onSubmit={handleSubmit} autoComplete="off" className="space-y-8">
             {/* Section 1: Personal & Professional Identity */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-                <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center text-sm font-bold">1</div>
-                <h3 className="text-sm font-bold text-gray-800">පෞද්ගලික සහ වෘත්තීය තොරතුරු (Personal & Professional Identity)</h3>
+            <div className="space-y-5">
+              <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-black text-sm border border-blue-200 shadow-sm">1</div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">පෞද්ගලික සහ වෘත්තීය තොරතුරු (Personal & Professional Identity)</h3>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {/* Full Name */}
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    සම්පූර්ණ නම (Full Name with Initials) <span className="text-red-500">*</span>
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5">
+                    සම්පූර්ණ නම (Full Name) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     name="fullName"
-                    placeholder="වෛද්‍යවරයාගේ සම්පූර්ණ නම"
                     value={formData.fullName}
                     onChange={handleChange}
+                    placeholder="උදා: Dr. කසුන් බණ්ඩාර පෙරේරා"
                     required
-                    autoComplete="off"
-                    className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all text-sm font-medium"
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base font-semibold focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all"
                   />
+                </div>
+
+                {/* NIC */}
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5">
+                    ජාතික හැඳුනුම්පත (NIC) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="nic"
+                    value={formData.nic}
+                    onChange={handleChange}
+                    placeholder="198512345678 හෝ 851234567V"
+                    required
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base font-mono font-bold uppercase focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all"
+                  />
+                </div>
+
+                {/* SLMC Reg Number */}
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5">
+                    SLMC ලියාපදිංචි අංකය (SLMC Reg No)
+                  </label>
+                  <input
+                    type="text"
+                    name="slmcNumber"
+                    value={formData.slmcNumber}
+                    onChange={handleChange}
+                    placeholder="SLMC/MED/XXXXX"
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base font-mono font-bold focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all"
+                  />
+                </div>
+
+                {/* Designation */}
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5">
+                    තනතුර (Designation) <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="designation"
+                    value={formData.designation}
+                    onChange={handleChange}
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base font-bold focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all"
+                  >
+                    {DESIGNATIONS.map(des => (
+                      <option key={des} value={des}>{des}</option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Gender */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5">
                     ස්ත්‍රී / පුරුෂ භාවය (Gender)
                   </label>
                   <select
                     name="gender"
                     value={formData.gender}
                     onChange={handleChange}
-                    className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none text-sm font-medium"
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base font-bold focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all"
                   >
-                    <option value="Male">පිරිමි (Male)</option>
-                    <option value="Female">ගැහැණු (Female)</option>
-                  </select>
-                </div>
-
-                {/* NIC Number */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    ජාතික හැඳුනුම්පත් අංකය (NIC No.) <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="nic"
-                    placeholder="ජාතික හැඳුනුම්පත් අංකය (NIC)"
-                    value={formData.nic}
-                    onChange={handleChange}
-                    required
-                    autoComplete="off"
-                    className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all text-sm font-medium font-mono"
-                  />
-                </div>
-
-                {/* SLMC Reg Number */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    ශ්‍රී ලංකා වෛද්‍ය සභා අංකය (SLMC Reg No.)
-                  </label>
-                  <input
-                    type="text"
-                    name="slmcNumber"
-                    placeholder="SLMC ලියාපදිංචි අංකය"
-                    value={formData.slmcNumber}
-                    onChange={handleChange}
-                    autoComplete="off"
-                    className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all text-sm font-medium font-mono"
-                  />
-                </div>
-
-                {/* Designation */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    තනතුර (Designation / Role) <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="designation"
-                    value={formData.designation}
-                    onChange={handleChange}
-                    required
-                    className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none text-sm font-medium"
-                  >
-                    {DESIGNATIONS.map(desig => (
-                      <option key={desig} value={desig}>{desig}</option>
-                    ))}
+                    <option value="Male">පුරුෂ (Male)</option>
+                    <option value="Female">ස්ත්‍රී (Female)</option>
+                    <option value="Other">වෙනත් (Other)</option>
                   </select>
                 </div>
               </div>
             </div>
 
-            {/* Section 2: Contact & Office Details */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-                <div className="w-7 h-7 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center text-sm font-bold">2</div>
-                <h3 className="text-sm font-bold text-gray-800">සම්බන්ධීකරණ සහ කාර්යාල තොරතුරු (Contact & Office Information)</h3>
+            {/* Section 2: Regional Jurisdiction */}
+            <div className="space-y-5">
+              <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-black text-sm border border-blue-200 shadow-sm">2</div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">පරිපාලන බලප්‍රදේශය (Regional Jurisdiction)</h3>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Personal Phone */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    ජංගම දුරකථන අංකය (Mobile Number) <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    placeholder="07X XXXXXXX"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    required
-                    autoComplete="off"
-                    className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all text-sm font-medium"
-                  />
-                </div>
-
-                {/* Office Phone */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    MOH කාර්යාල දුරකථන අංකය (Office Phone)
-                  </label>
-                  <input
-                    type="tel"
-                    name="officePhone"
-                    placeholder="0XX XXXXXXX"
-                    value={formData.officePhone}
-                    onChange={handleChange}
-                    autoComplete="off"
-                    className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all text-sm font-medium"
-                  />
-                </div>
-
-                {/* Office Address */}
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    MOH කාර්යාලයේ නිල ලිපිනය (MOH Office Official Address)
-                  </label>
-                  <input
-                    type="text"
-                    name="officeAddress"
-                    placeholder="කාර්යාල ලිපිනය ඇතුළත් කරන්න"
-                    value={formData.officeAddress}
-                    onChange={handleChange}
-                    autoComplete="off"
-                    className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none transition-all text-sm font-medium"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Section 3: Jurisdiction & Assignment */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-                <div className="w-7 h-7 rounded-lg bg-cyan-50 text-cyan-700 flex items-center justify-center text-sm font-bold">3</div>
-                <h3 className="text-sm font-bold text-gray-800">පරිපාලන බලප්‍රදේශය සහ පත්වීම් තොරතුරු (Jurisdiction & Regional Assignment)</h3>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {/* District */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5">
                     දිස්ත්‍රික්කය (District) <span className="text-red-500">*</span>
                   </label>
                   <select
@@ -658,7 +625,7 @@ const AddMOHAdmin = () => {
                     value={formData.district}
                     onChange={handleChange}
                     required
-                    className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none text-sm font-medium"
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base font-bold focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all"
                   >
                     <option value="">-- දිස්ත්‍රික්කය තෝරන්න --</option>
                     {DISTRICTS.map(dist => (
@@ -667,9 +634,9 @@ const AddMOHAdmin = () => {
                   </select>
                 </div>
 
-                {/* Cascading MOH Area */}
+                {/* MOH Area */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5">
                     MOH ප්‍රදේශය (MOH Area) <span className="text-red-500">*</span>
                   </label>
                   <select
@@ -678,22 +645,78 @@ const AddMOHAdmin = () => {
                     onChange={handleChange}
                     required
                     disabled={!formData.district}
-                    className={`w-full p-2.5 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-medium ${
-                      !formData.district ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200' : 'bg-gray-50/70 border-gray-200 focus:bg-white'
+                    className={`w-full p-3.5 border rounded-2xl text-sm sm:text-base font-bold focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all ${
+                      !formData.district ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200' : 'bg-slate-50 border-slate-200'
                     }`}
                   >
-                    <option value="">
-                      {formData.district ? "-- MOH ප්‍රදේශය තෝරන්න --" : "-- පළමුව දිස්ත්‍රික්කය තෝරන්න --"}
-                    </option>
+                    <option value="">-- MOH ප්‍රදේශය තෝරන්න --</option>
                     {availableMohAreas.map(area => (
                       <option key={area} value={area}>{area}</option>
                     ))}
                   </select>
                 </div>
 
+                {/* Status */}
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5">
+                    සේවා තත්ත්වය (Account Status)
+                  </label>
+                  <select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleChange}
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base font-bold focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all"
+                  >
+                    <option value="Active">Active (ක්‍රියාකාරී)</option>
+                    <option value="Inactive">Inactive (අක්‍රිය)</option>
+                    <option value="On Leave">On Leave (නිවාඩු මත)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 3: Contact & Office Details */}
+            <div className="space-y-5">
+              <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-black text-sm border border-blue-200 shadow-sm">3</div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">සම්බන්ධීකරණ සහ කාර්යාල තොරතුරු (Contact & Office Details)</h3>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {/* Personal Phone */}
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5">
+                    ජංගම දුරකථන අංකය (Mobile) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="0771234567"
+                    required
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base font-semibold focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all"
+                  />
+                </div>
+
+                {/* Office Phone */}
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5">
+                    MOH කාර්යාල දුරකථන අංකය
+                  </label>
+                  <input
+                    type="tel"
+                    name="officePhone"
+                    value={formData.officePhone}
+                    onChange={handleChange}
+                    placeholder="0112345678"
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base font-semibold focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all"
+                  />
+                </div>
+
                 {/* Appointment Date */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5">
                     පත් කළ දිනය (Appointment Date)
                   </label>
                   <input
@@ -701,166 +724,142 @@ const AddMOHAdmin = () => {
                     name="appointmentDate"
                     value={formData.appointmentDate}
                     onChange={handleChange}
-                    className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none text-sm font-medium"
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base font-semibold focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all"
                   />
                 </div>
 
-                {/* Status */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    සේවා තත්ත්වය (Status)
+                {/* Office Address */}
+                <div className="sm:col-span-2 lg:col-span-3">
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5">
+                    MOH කාර්යාලයේ ලිපිනය (Office Address)
                   </label>
-                  <select
-                    name="status"
-                    value={formData.status}
+                  <input
+                    type="text"
+                    name="officeAddress"
+                    value={formData.officeAddress}
                     onChange={handleChange}
-                    className="w-full p-2.5 bg-gray-50/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none text-sm font-medium"
-                  >
-                    <option value="Active">සක්‍රීය (Active)</option>
-                    <option value="On Leave">නිවාඩු මත (On Leave)</option>
-                    <option value="Transferred">ස්ථාන මාරු වූ (Transferred)</option>
-                  </select>
+                    placeholder="උදා: සෞඛ්‍ය වෛද්‍ය නිලධාරී කාර්යාලය, ගාලු පාර, මොරටුව"
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base font-semibold focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all"
+                  />
                 </div>
               </div>
             </div>
 
-            {/* Section 4: Authentication Credentials (Email & Password) */}
-            <div className="space-y-4 bg-emerald-50/40 p-5 rounded-2xl border border-emerald-100">
-              <div className="flex items-center gap-2 pb-2 border-b border-emerald-200/60">
-                <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-sm font-bold shadow-sm">4</div>
-                <div>
-                  <h3 className="text-sm font-extrabold text-gray-800">පද්ධති පිවිසුම් ගිණුම් තොරතුරු (System Login & Access Credentials)</h3>
-                  <p className="text-[11px] text-gray-500 font-medium">MOH නිලධාරියා පද්ධතියට ලොග් වීම සඳහා භාවිත කරන ඊමේල් ලිපිනය සහ ආරක්‍ෂිත මුරපදය</p>
-                </div>
+            {/* Section 4: Login Account & Encrypted Password */}
+            <div className="space-y-5">
+              <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-black text-sm border border-blue-200 shadow-sm">4</div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">පද්ධති පිවිසුම් ගිණුම (Login Credentials)</h3>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {/* Email Address */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {/* Official Email */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    රාජකාරි පිවිසුම් ඊමේල් ලිපිනය (Official Login Email) <span className="text-red-500">*</span>
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5">
+                    රාජකාරි ඊමේල් ලිපිනය (Login Email) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="email"
                     name="email"
-                    placeholder="officer@moh.health.gov.lk"
                     value={formData.email}
                     onChange={handleChange}
+                    placeholder="doctor@moh.gov.lk"
                     required
-                    disabled={!!editingId}
-                    className={`w-full p-2.5 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all text-sm font-medium ${
-                      editingId ? 'bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200' : 'bg-white border-gray-200 focus:border-emerald-500 shadow-sm'
-                    }`}
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base font-mono font-bold focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all"
                   />
-                  <p className="text-[10px] text-gray-500 font-semibold mt-1">
-                    {editingId ? "ලියාපදිංචි කළ ඊමේල් ලිපිනය වෙනස් කළ නොහැක." : "මෙම ඊමේල් ලිපිනය පද්ධතියේ වෙනත් කිසිදු ගිණුමකට භාවිත කර නොතිබිය යුතුය."}
-                  </p>
+                  <p className="text-xs text-slate-400 mt-1">මෙම ඊමේල් ලිපිනය මඟින් නිලධාරියා පද්ධතියට ලොග් වේ.</p>
                 </div>
 
-                {/* Password Field (Only on creation) */}
+                {/* Password Field with Security Gauge */}
                 {!editingId ? (
                   <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1.5">
+                      ආරක්ෂිත මුරපදය (Encrypted Password) <span className="text-red-500">*</span>
+                    </label>
                     <PasswordSecurityField
-                      label="ආරම්භක මුරපදය (Initial Password)"
                       value={formData.password}
-                      onChange={handleChange}
-                      name="password"
-                      placeholder="ශක්තිමත් මුරපදයක් ඇතුළත් කරන්න"
-                      required
+                      onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                      placeholder="ශක්තිමත් මුරපදයක් ඇතුළත් කරන්න..."
+                      required={!editingId}
                     />
                   </div>
                 ) : (
-                  <div className="flex items-center p-3 bg-white rounded-xl border border-gray-200 text-xs text-gray-500">
-                    🔒 මුරපදය සංස්කරණය සඳහා වෙනම මුරපද යළි පිහිටුවීමේ ක්‍රමවේදය (Reset Password) භාවිත කරන්න.
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center text-xs sm:text-sm text-slate-600 font-medium">
+                    🔒 ආරක්ෂක හේතුන් මත මුරපදය මෙතැනින් වෙනස් කළ නොහැක. (Encrypted Password Protected)
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Submit Button */}
-            <div className="pt-4 border-t border-gray-100 flex flex-col sm:flex-row gap-3">
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-extrabold py-3.5 px-6 rounded-2xl shadow-lg shadow-emerald-600/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <>
-                    <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span>ක්‍රියාත්මක වෙමින් පවතී...</span>
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>{editingId ? "MOH නිලධාරී විස්තර යාවත්කාලීන කරන්න (Update Officer)" : "MOH නිලධාරියා පද්ධතියට එක් කරන්න (Register MOH Officer)"}</span>
-                  </>
-                )}
-              </button>
-
+            {/* Submit Button Bar */}
+            <div className="pt-5 border-t border-slate-100 flex justify-end items-center space-x-4">
               {editingId && (
                 <button
                   type="button"
                   onClick={cancelEdit}
-                  className="px-6 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl font-bold text-sm transition-all"
+                  className="px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-2xl transition-all"
                 >
                   අවලංගු කරන්න
                 </button>
               )}
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white text-sm sm:text-base font-bold rounded-2xl shadow-lg shadow-blue-500/30 transition-all flex items-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>සුරකිමින් පවතී...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>{editingId ? "යාවත්කාලීන කරන්න (Update MOH Admin)" : "MOH නිලධාරියා ලියාපදිංචි කරන්න (Register Admin)"}</span>
+                    <span>&rarr;</span>
+                  </>
+                )}
+              </button>
             </div>
           </form>
         </div>
 
-        {/* Existing Admins Directory Table */}
-        <div className="bg-white p-8 rounded-3xl shadow-md border border-gray-100 space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        {/* Officers Directory & Management Table (Blue & White) */}
+        <div className="bg-white rounded-3xl shadow-sm border border-blue-100 p-6 sm:p-8 space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
             <div>
-              <h2 className="text-xl font-bold text-gray-800">ලියාපදිංචි සෞඛ්‍ය වෛද්‍ය නිලධාරීන් (MOH Directory)</h2>
-              <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mt-0.5">
-                Registered MOH Administrators ({filteredAdmins.length} Officers)
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">ලියාපදිංචි MOH නිලධාරීන් නාමාවලිය</h2>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-0.5">
+                Medical Officers of Health (MOH) Directory & Management
               </p>
             </div>
 
-            {/* Filter & Search Bar */}
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Search */}
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="නම, NIC, SLMC හෝ MOH ප්‍රදේශය..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:bg-white outline-none w-64"
-                />
-                <svg className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
+            {/* Filter Controls */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <input
+                type="text"
+                placeholder="සොයන්න (නම, NIC, MOH, Email)..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none w-full sm:w-64"
+              />
 
-              {/* District Filter */}
-              <div className="flex items-center space-x-2">
-                <select
-                  value={tableDistrictFilter}
-                  onChange={(e) => setTableDistrictFilter(e.target.value)}
-                  className="p-2 border border-gray-200 rounded-xl text-xs font-bold bg-gray-50 focus:ring-2 focus:ring-emerald-500 outline-none"
-                >
-                  <option value="All">සියලුම දිස්ත්‍රික්ක (All Districts)</option>
-                  {DISTRICTS.map(dist => (
-                    <option key={dist} value={dist}>{dist}</option>
-                  ))}
-                </select>
-              </div>
+              <select
+                value={tableDistrictFilter}
+                onChange={(e) => setTableDistrictFilter(e.target.value)}
+                className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm font-bold focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none"
+              >
+                <option value="All">සියලුම දිස්ත්‍රික්ක (All Districts)</option>
+                {DISTRICTS.map(dist => (
+                  <option key={dist} value={dist}>{dist}</option>
+                ))}
+              </select>
             </div>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left">
+            <table className="w-full border-collapse text-left text-sm">
               <thead>
-                <tr className="bg-slate-50 border-b border-gray-100 text-[11px] font-black text-gray-500 uppercase tracking-wider">
+                <tr className="bg-slate-50 border-b border-slate-100 text-xs font-black text-slate-600 uppercase tracking-wider">
                   <th className="p-4">නිලධාරියා (Officer & NIC)</th>
                   <th className="p-4">තනතුර සහ SLMC</th>
                   <th className="p-4">MOH ප්‍රදේශය & දිස්ත්‍රික්කය</th>
@@ -869,60 +868,60 @@ const AddMOHAdmin = () => {
                   <th className="p-4 text-center">ක්‍රියාකාරකම් (Actions)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-slate-100">
                 {filteredAdmins.length > 0 ? filteredAdmins.map(admin => {
                   const displayDistrict = admin.district || findDistrictByMohArea(admin.mohArea) || '—';
                   return (
-                    <tr key={admin.id} className="hover:bg-emerald-50/20 transition-colors">
+                    <tr key={admin.id} className="hover:bg-blue-50/30 transition-colors">
                       {/* Name & NIC */}
                       <td className="p-4">
-                        <div className="font-bold text-gray-800 text-sm flex items-center gap-2">
+                        <div className="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-2">
                           <span>{admin.fullName}</span>
                         </div>
-                        <div className="text-[11px] font-bold text-emerald-700 font-mono mt-0.5">
+                        <div className="text-xs font-bold text-blue-700 font-mono mt-0.5">
                           NIC: {admin.nic || 'නොදක්වා ඇත'}
                         </div>
                       </td>
 
                       {/* Designation & SLMC */}
                       <td className="p-4">
-                        <div className="text-xs font-semibold text-gray-700">{admin.designation || 'Medical Officer of Health'}</div>
-                        <div className="text-[10px] font-bold text-gray-400 font-mono">
+                        <div className="text-sm font-semibold text-slate-800">{admin.designation || 'Medical Officer of Health'}</div>
+                        <div className="text-xs font-bold text-slate-400 font-mono mt-0.5">
                           {admin.slmcNumber ? `SLMC: ${admin.slmcNumber}` : '—'}
                         </div>
                       </td>
 
                       {/* Jurisdiction */}
                       <td className="p-4">
-                        <div className="text-xs font-bold text-teal-700 bg-teal-50 px-2.5 py-1 rounded-lg inline-block border border-teal-100">
+                        <div className="text-xs font-bold text-blue-800 bg-blue-50 px-3 py-1 rounded-xl inline-block border border-blue-100">
                           {admin.mohArea}
                         </div>
-                        <div className="text-[11px] text-gray-500 font-medium mt-0.5">{displayDistrict}</div>
+                        <div className="text-xs text-slate-500 font-medium mt-1">{displayDistrict}</div>
                       </td>
 
                       {/* Contact */}
                       <td className="p-4">
-                        <div className="text-xs font-bold text-gray-700">{admin.phone || '—'}</div>
-                        <div className="text-[11px] text-gray-400 font-mono">{admin.email}</div>
+                        <div className="text-sm font-bold text-slate-800">{admin.phone || '—'}</div>
+                        <div className="text-xs text-blue-600 font-mono mt-0.5">{admin.email}</div>
                       </td>
 
                       {/* Status */}
                       <td className="p-4 text-center">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
-                          (admin.status || 'Active') === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                        <span className={`px-3 py-1 rounded-full text-xs font-black uppercase border ${
+                          (admin.status || 'Active') === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
                         }`}>
                           {admin.status || 'Active'}
                         </span>
                       </td>
 
                       {/* Actions */}
-                      <td className="p-4 text-center">
-                        <div className="flex items-center justify-center space-x-1.5">
+                      <td className="p-4 text-center whitespace-nowrap">
+                        <div className="flex items-center justify-center space-x-2">
                           {/* View Full Profile */}
                           <button
                             onClick={() => setViewingAdmin(admin)}
                             title="සම්පූර්ණ තොරතුරු බලන්න (View Full Profile)"
-                            className="p-2 bg-emerald-50 text-emerald-700 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
+                            className="p-2.5 bg-blue-50 text-blue-700 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -934,7 +933,7 @@ const AddMOHAdmin = () => {
                           <button
                             onClick={() => startEdit(admin)}
                             title="සංස්කරණය (Edit Details)"
-                            className="p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                            className="p-2.5 bg-indigo-50 text-indigo-700 rounded-xl hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -945,7 +944,7 @@ const AddMOHAdmin = () => {
                           <button
                             onClick={() => setShowDeleteModal(admin.id)}
                             title="ඉවත් කරන්න (Remove Officer)"
-                            className="p-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                            className="p-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -957,7 +956,7 @@ const AddMOHAdmin = () => {
                   );
                 }) : (
                   <tr>
-                    <td colSpan="6" className="p-10 text-center text-gray-400 italic">
+                    <td colSpan="6" className="p-12 text-center text-slate-400 italic text-sm">
                       කිසිදු MOH නිලධාරියෙකුගේ තොරතුරු හමු නොවීය. (No MOH officers found)
                     </td>
                   </tr>
