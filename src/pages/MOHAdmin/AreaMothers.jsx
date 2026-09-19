@@ -3,6 +3,7 @@ import { auth, db } from '../../firebase/config';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import MOHLayout from '../../components/MOHLayout';
 import { DISTRICTS, getMohAreas, findDistrictByMohArea } from '../../data/sriLankaLocations';
+import { formatDisplayDate, safeRenderText } from '../../utils/securityValidators';
 
 const AreaMothers = () => {
   const [mothers, setMothers] = useState([]);
@@ -41,7 +42,29 @@ const AreaMothers = () => {
       try {
         const q = query(collection(db, "mothers"), where("mohArea", "==", mohArea));
         const querySnapshot = await getDocs(q);
-        const mothersList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const mothersList = querySnapshot.docs.map(d => {
+          const data = d.data();
+          return {
+            id: d.id,
+            ...data,
+            fullName: safeRenderText(data.fullName, ''),
+            nic: safeRenderText(data.nic, ''),
+            phone: safeRenderText(data.phone, ''),
+            emergencyPhone: safeRenderText(data.emergencyPhone || data.husbandPhone, ''),
+            address: safeRenderText(data.address, ''),
+            bloodGroup: safeRenderText(data.bloodGroup, ''),
+            mohArea: safeRenderText(data.mohArea, ''),
+            district: safeRenderText(data.district, ''),
+            serviceArea: safeRenderText(data.serviceArea || data.phmArea, ''),
+            midwifeName: safeRenderText(data.midwifeName, ''),
+            hospitalName: safeRenderText(data.hospitalName, ''),
+            riskStatus: safeRenderText(data.riskStatus, 'Normal'),
+            notes: safeRenderText(data.notes || data.riskNotes, ''),
+            edd: formatDisplayDate(data.edd, 'නොදක්වා ඇත'),
+            gestationalAge: safeRenderText(data.gestationalAge || data.weeks, ''),
+            age: safeRenderText(data.age, '')
+          };
+        });
         
         setMothers(mothersList);
         setFilteredMothers(mothersList);

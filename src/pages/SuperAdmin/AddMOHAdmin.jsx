@@ -5,7 +5,7 @@ import { doc, setDoc, collection, getDocs, deleteDoc, updateDoc } from 'firebase
 import AdminLayout from '../../components/AdminLayout';
 import { DISTRICTS, getMohAreas, findDistrictByMohArea } from '../../data/sriLankaLocations';
 import PasswordSecurityField from '../../components/PasswordSecurityField';
-import { checkEmailUniqueness, checkNICUniqueness, evaluatePasswordStrength, formatAuthError, isValidEmail, isValidNIC } from '../../utils/securityValidators';
+import { checkEmailUniqueness, checkNICUniqueness, evaluatePasswordStrength, formatAuthError, formatDisplayDate, isValidEmail, isValidNIC, safeRenderText } from '../../utils/securityValidators';
 
 const DESIGNATIONS = [
   'Medical Officer of Health (MOH)',
@@ -29,8 +29,8 @@ const AddMOHAdmin = () => {
     district: '',
     mohArea: '',
     appointmentDate: new Date().toISOString().split('T')[0],
-    status: 'Active',
-    password: ''
+    password: '',
+    status: 'Active'
   };
 
   const [formData, setFormData] = useState(initialFormState);
@@ -39,15 +39,34 @@ const AddMOHAdmin = () => {
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('success');
   const [editingId, setEditingId] = useState(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(null); 
   const [viewingAdmin, setViewingAdmin] = useState(null);
-  const [tableDistrictFilter, setTableDistrictFilter] = useState('All');
+  const [showDeleteModal, setShowDeleteModal] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [tableDistrictFilter, setTableDistrictFilter] = useState('All');
 
   const fetchAdmins = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, "moh_admins"));
-      const adminData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const adminData = querySnapshot.docs.map(d => {
+        const data = d.data();
+        return {
+          id: d.id,
+          ...data,
+          fullName: safeRenderText(data.fullName, ''),
+          nic: safeRenderText(data.nic, ''),
+          slmcNumber: safeRenderText(data.slmcNumber, ''),
+          email: safeRenderText(data.email, ''),
+          phone: safeRenderText(data.phone, ''),
+          officePhone: safeRenderText(data.officePhone, ''),
+          officeAddress: safeRenderText(data.officeAddress, ''),
+          mohArea: safeRenderText(data.mohArea, ''),
+          district: safeRenderText(data.district, ''),
+          designation: safeRenderText(data.designation, 'Medical Officer of Health (MOH)'),
+          gender: safeRenderText(data.gender, 'Male'),
+          status: safeRenderText(data.status, 'Active'),
+          appointmentDate: formatDisplayDate(data.appointmentDate, '—')
+        };
+      });
       setAdmins(adminData);
     } catch (error) {
       console.error("Error fetching MOH admins:", error);

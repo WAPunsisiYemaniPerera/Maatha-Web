@@ -4,7 +4,7 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, collection, getDocs, deleteDoc, updateDoc } from 'firebase/firestore';
 import AdminLayout from '../../components/AdminLayout';
 import { DISTRICTS } from '../../data/sriLankaLocations';
-import { isValidEmail, isValidNIC, checkEmailUniqueness, checkNICUniqueness, evaluatePasswordStrength, formatAuthError } from '../../utils/securityValidators';
+import { isValidEmail, isValidNIC, checkEmailUniqueness, checkNICUniqueness, evaluatePasswordStrength, formatAuthError, formatDisplayDate, safeRenderText } from '../../utils/securityValidators';
 import PasswordSecurityField from '../../components/PasswordSecurityField';
 
 const HOSPITAL_TYPES = [
@@ -65,7 +65,33 @@ const AddHospitalAdmin = () => {
   const fetchHospitalAdmins = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, "hospital_admins"));
-      const adminData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const adminData = querySnapshot.docs.map(d => {
+        const data = d.data();
+        return {
+          id: d.id,
+          ...data,
+          hospitalName: safeRenderText(data.hospitalName, ''),
+          hospitalType: safeRenderText(data.hospitalType, 'District General Hospital'),
+          hospitalCode: safeRenderText(data.hospitalCode, ''),
+          district: safeRenderText(data.district, ''),
+          city: safeRenderText(data.city, ''),
+          hospitalAddress: safeRenderText(data.hospitalAddress, ''),
+          hospitalPhone: safeRenderText(data.hospitalPhone, ''),
+          maternityWardCapacity: safeRenderText(data.maternityWardCapacity, ''),
+          hasNicu: safeRenderText(data.hasNicu, 'No'),
+          hasBloodBank: safeRenderText(data.hasBloodBank, 'No'),
+          hasLabourRoom: safeRenderText(data.hasLabourRoom, 'No'),
+          adminName: safeRenderText(data.adminName || data.fullName, ''),
+          adminNic: safeRenderText(data.adminNic || data.nic, ''),
+          slmcNumber: safeRenderText(data.slmcNumber, ''),
+          designation: safeRenderText(data.designation, 'Medical Superintendent (MS)'),
+          gender: safeRenderText(data.gender, 'Male'),
+          adminPhone: safeRenderText(data.adminPhone || data.phone, ''),
+          email: safeRenderText(data.email, ''),
+          status: safeRenderText(data.status, 'Active'),
+          registrationDate: formatDisplayDate(data.registrationDate || data.appointmentDate || data.createdAt, '—')
+        };
+      });
       setAdmins(adminData);
     } catch (error) {
       console.error("Error fetching hospital admins:", error);

@@ -4,6 +4,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
 import { findDistrictByMohArea } from '../../data/sriLankaLocations';
+import { safeRenderText } from '../../utils/securityValidators';
 
 const Dashboard = () => {
   const [counts, setCounts] = useState({
@@ -27,19 +28,52 @@ const Dashboard = () => {
       try {
         // Fetch Mothers
         const mothersSnap = await getDocs(collection(db, "mothers"));
-        const mothersList = mothersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const mothersList = mothersSnap.docs.map(d => {
+          const data = d.data();
+          return {
+            id: d.id,
+            ...data,
+            fullName: safeRenderText(data.fullName, ''),
+            nic: safeRenderText(data.nic, ''),
+            riskStatus: safeRenderText(data.riskStatus, 'Normal'),
+            district: safeRenderText(data.district, ''),
+            mohArea: safeRenderText(data.mohArea, '')
+          };
+        });
         
         // Fetch MOH Admins
         const mohSnap = await getDocs(collection(db, "moh_admins"));
-        const mohList = mohSnap.docs.map(doc => ({ id: doc.id, role: 'MOH Admin', ...doc.data() }));
+        const mohList = mohSnap.docs.map(d => {
+          const data = d.data();
+          return {
+            id: d.id,
+            role: 'MOH Admin',
+            ...data,
+            fullName: safeRenderText(data.fullName, ''),
+            email: safeRenderText(data.email, ''),
+            mohArea: safeRenderText(data.mohArea, ''),
+            district: safeRenderText(data.district, '')
+          };
+        });
 
         // Fetch Hospital Admins
         const hospSnap = await getDocs(collection(db, "hospital_admins"));
-        const hospList = hospSnap.docs.map(doc => ({ id: doc.id, role: 'Hospital Admin', ...doc.data() }));
+        const hospList = hospSnap.docs.map(d => {
+          const data = d.data();
+          return {
+            id: d.id,
+            role: 'Hospital Admin',
+            ...data,
+            fullName: safeRenderText(data.adminName || data.fullName, ''),
+            email: safeRenderText(data.email, ''),
+            hospitalName: safeRenderText(data.hospitalName, ''),
+            district: safeRenderText(data.district, '')
+          };
+        });
 
         // Fetch Midwives
         const midSnap = await getDocs(collection(db, "midwives"));
-        const midList = midSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const midList = midSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
         // Risk Counts
         const highRiskMothers = mothersList.filter(m => m.riskStatus === 'High-Risk');

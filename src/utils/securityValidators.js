@@ -200,3 +200,58 @@ export const formatAuthError = (error) => {
 
   return `දෝෂයක් සිදු විය: ${error.message || code}`;
 };
+
+/**
+ * Safely formats any date-like value (Date, ISO string, Firestore Timestamp {seconds, nanoseconds}) to a displayable string.
+ */
+export const formatDisplayDate = (val, fallback = '—') => {
+  if (val === null || val === undefined || val === '') return fallback;
+  if (typeof val === 'string') return val;
+  if (typeof val === 'number') return new Date(val).toLocaleDateString();
+  if (val instanceof Date) return val.toLocaleDateString();
+  if (typeof val === 'object') {
+    if (typeof val.toDate === 'function') {
+      try {
+        return val.toDate().toLocaleDateString();
+      } catch (e) {
+        return fallback;
+      }
+    }
+    if ('seconds' in val && typeof val.seconds === 'number') {
+      return new Date(val.seconds * 1000).toLocaleDateString();
+    }
+    if ('_seconds' in val && typeof val._seconds === 'number') {
+      return new Date(val._seconds * 1000).toLocaleDateString();
+    }
+  }
+  return String(val);
+};
+
+/**
+ * Safely formats any value for direct rendering in React JSX to prevent "Objects are not valid as a React child" errors.
+ */
+export const safeRenderText = (val, fallback = '—') => {
+  if (val === null || val === undefined || val === '') return fallback;
+  if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') return val;
+  if (typeof val === 'object') {
+    if (typeof val.toDate === 'function') {
+      try {
+        return val.toDate().toLocaleDateString();
+      } catch (e) {
+        return fallback;
+      }
+    }
+    if ('seconds' in val && typeof val.seconds === 'number') {
+      return new Date(val.seconds * 1000).toLocaleDateString();
+    }
+    if ('_seconds' in val && typeof val._seconds === 'number') {
+      return new Date(val._seconds * 1000).toLocaleDateString();
+    }
+    if (Array.isArray(val)) {
+      return val.map(item => safeRenderText(item, '')).filter(Boolean).join(', ');
+    }
+    // Unknown object structure - return fallback to prevent React crash
+    return fallback;
+  }
+  return String(val);
+};
