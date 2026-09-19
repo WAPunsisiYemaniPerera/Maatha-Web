@@ -3,6 +3,7 @@ import { auth, db } from '../../firebase/config';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, collection, getDocs, deleteDoc, updateDoc } from 'firebase/firestore';
 import AdminLayout from '../../components/AdminLayout';
+import { DISTRICTS, getMohAreas, findDistrictByMohArea } from '../../data/sriLankaLocations';
 
 const AddMOHAdmin = () => {
   const [formData, setFormData] = useState({ name: '', mohArea: '', district: '', email: '', password: '' });
@@ -11,6 +12,7 @@ const AddMOHAdmin = () => {
   const [message, setMessage] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(null); 
+  const [tableDistrictFilter, setTableDistrictFilter] = useState('All');
 
   const fetchAdmins = async () => {
     const querySnapshot = await getDocs(collection(db, "moh_admins"));
@@ -21,11 +23,26 @@ const AddMOHAdmin = () => {
   useEffect(() => { fetchAdmins(); }, []);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (name === 'district') {
+      // When district changes, reset mohArea
+      setFormData(prev => ({ ...prev, district: value, mohArea: '' }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.district) {
+      setMessage("කරුණාකර දිස්ත්‍රික්කය තෝරන්න (Please select a District)");
+      return;
+    }
+    if (!formData.mohArea) {
+      setMessage("කරුණාකර MOH ප්‍රදේශය තෝරන්න (Please select an MOH Area)");
+      return;
+    }
+
     setLoading(true);
     try {
       if (editingId) {
@@ -56,7 +73,7 @@ const AddMOHAdmin = () => {
       
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
-      setMessage("දෝෂයක් සිදු විය ");
+      setMessage("දෝෂයක් සිදු විය: " + error.message);
     }
     setLoading(false);
   };
@@ -73,10 +90,25 @@ const AddMOHAdmin = () => {
   };
 
   const startEdit = (admin) => {
+    const inferredDistrict = admin.district || findDistrictByMohArea(admin.mohArea) || '';
     setEditingId(admin.id);
-    setFormData({ name: admin.fullName, mohArea: admin.mohArea, district: admin.district, email: admin.email, password: '*****' });
+    setFormData({
+      name: admin.fullName || '',
+      district: inferredDistrict,
+      mohArea: admin.mohArea || '',
+      email: admin.email || '',
+      password: '*****'
+    });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const availableMohAreas = getMohAreas(formData.district);
+
+  const filteredAdmins = admins.filter(admin => {
+    if (tableDistrictFilter === 'All') return true;
+    const adminDistrict = admin.district || findDistrictByMohArea(admin.mohArea);
+    return adminDistrict === tableDistrictFilter;
+  });
 
   return (
     <AdminLayout>
@@ -127,18 +159,98 @@ const AddMOHAdmin = () => {
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <input type="text" name="name" placeholder="සම්පූර්ණ නම (Full Name)" value={formData.name} onChange={handleChange} required className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
+              <label className="block text-xs font-bold text-gray-700 mb-1">
+                සම්පූර්ණ නම (Full Name)
+              </label>
+              <input 
+                type="text" 
+                name="name" 
+                placeholder="උදා: Dr. K. Silva" 
+                value={formData.name} 
+                onChange={handleChange} 
+                required 
+                className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm font-medium" 
+              />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <input type="text" name="mohArea" placeholder="MOH ප්‍රදේශය (MOH Area)" value={formData.mohArea} onChange={handleChange} required className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none" />
-              <input type="text" name="district" placeholder="දිස්ත්‍රික්කය (District)" value={formData.district} onChange={handleChange} required className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none" />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* District Dropdown */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  දිස්ත්‍රික්කය (District) <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="district"
+                  value={formData.district}
+                  onChange={handleChange}
+                  required
+                  className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium bg-white"
+                >
+                  <option value="">-- දිස්ත්‍රික්කය තෝරන්න (Select District) --</option>
+                  {DISTRICTS.map(dist => (
+                    <option key={dist} value={dist}>{dist}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Cascading MOH Area Dropdown */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  MOH ප්‍රදේශය (MOH Area) <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="mohArea"
+                  value={formData.mohArea}
+                  onChange={handleChange}
+                  required
+                  disabled={!formData.district}
+                  className={`w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium ${
+                    !formData.district ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white'
+                  }`}
+                >
+                  <option value="">
+                    {formData.district ? "-- MOH ප්‍රදේශය තෝරන්න (Select MOH Area) --" : "-- පළමුව දිස්ත්‍රික්කය තෝරන්න --"}
+                  </option>
+                  {availableMohAreas.map(area => (
+                    <option key={area} value={area}>{area}</option>
+                  ))}
+                </select>
+              </div>
             </div>
+
             {!editingId && (
-              <>
-                <input type="email" name="email" placeholder="ඊමේල් ලිපිනය (Email Address)" value={formData.email} onChange={handleChange} required className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none" />
-                <input type="password" name="password" placeholder="මුරපදය (Password)" value={formData.password} onChange={handleChange} required className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none" />
-              </>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    ඊමේල් ලිපිනය (Email Address) <span className="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="email" 
+                    name="email" 
+                    placeholder="example@moh.health.gov.lk" 
+                    value={formData.email} 
+                    onChange={handleChange} 
+                    required 
+                    className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    මුරපදය (Password) <span className="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="password" 
+                    name="password" 
+                    placeholder="••••••••" 
+                    value={formData.password} 
+                    onChange={handleChange} 
+                    required 
+                    className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium" 
+                  />
+                </div>
+              </div>
             )}
+
             <button type="submit" disabled={loading} className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 shadow-lg active:scale-95 transition-all">
               <div className="text-base">{loading ? "ක්‍රියාත්මක වෙමින්..." : (editingId ? "යාවත්කාලීන කරන්න" : "පද්ධතියට එක් කරන්න")}</div>
               <div className="text-[10px] uppercase opacity-80">{loading ? "Processing..." : (editingId ? "Update Details" : "Register Admin")}</div>
@@ -151,11 +263,28 @@ const AddMOHAdmin = () => {
           </form>
         </div>
 
-        
+        {/* Existing Admins Table */}
         <div className="bg-white p-8 rounded-lg shadow-md border-t-4 border-slate-700">
-          <div className="mb-6">
-            <h2 className="text-xl font-bold text-gray-800">දැනට සිටින MOH පාලකවරුන්</h2>
-            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Current MOH Administrators</div>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-xl font-bold text-gray-800">දැනට සිටින MOH පාලකවරුන්</h2>
+              <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Current MOH Administrators</div>
+            </div>
+
+            {/* Filter by District */}
+            <div className="flex items-center space-x-2">
+              <span className="text-xs font-bold text-gray-500 whitespace-nowrap">දිස්ත්‍රික්කය අනුව පෙරීම:</span>
+              <select
+                value={tableDistrictFilter}
+                onChange={(e) => setTableDistrictFilter(e.target.value)}
+                className="p-2 border rounded-lg text-xs font-bold bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none"
+              >
+                <option value="All">සියලුම දිස්ත්‍රික්ක (All)</option>
+                {DISTRICTS.map(dist => (
+                  <option key={dist} value={dist}>{dist}</option>
+                ))}
+              </select>
+            </div>
           </div>
           
           <div className="overflow-x-auto">
@@ -163,31 +292,44 @@ const AddMOHAdmin = () => {
               <thead>
                 <tr className="bg-gray-100 text-left text-sm font-bold text-gray-600 uppercase">
                   <th className="p-3">නම (Name)</th>
-                  <th className="p-3">ප්‍රදේශය (Area)</th>
+                  <th className="p-3">දිස්ත්‍රික්කය (District)</th>
+                  <th className="p-3">MOH ප්‍රදේශය (MOH Area)</th>
+                  <th className="p-3">ඊමේල් (Email)</th>
                   <th className="p-3 text-center">ක්‍රියාකාරකම් (Actions)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {admins.map(admin => (
-                  <tr key={admin.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="p-3 text-sm font-semibold text-gray-700">{admin.fullName}</td>
-                    <td className="p-3 text-sm text-gray-600">{admin.mohArea}</td>
-                    <td className="p-3 text-center">
-                      <div className="flex justify-center space-x-2">
-                        <button onClick={() => startEdit(admin)} title="සංස්කරණය / Edit" className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-600 hover:text-white transition-all shadow-sm">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
-                        <button onClick={() => setShowDeleteModal(admin.id)} title="ඉවත් කරන්න / Delete" className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-600 hover:text-white transition-all shadow-sm">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
+                {filteredAdmins.length > 0 ? filteredAdmins.map(admin => {
+                  const displayDistrict = admin.district || findDistrictByMohArea(admin.mohArea) || '—';
+                  return (
+                    <tr key={admin.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="p-3 text-sm font-semibold text-gray-700">{admin.fullName}</td>
+                      <td className="p-3 text-sm text-gray-600">{displayDistrict}</td>
+                      <td className="p-3 text-sm font-medium text-blue-600">{admin.mohArea}</td>
+                      <td className="p-3 text-xs text-gray-500 font-mono">{admin.email}</td>
+                      <td className="p-3 text-center">
+                        <div className="flex justify-center space-x-2">
+                          <button onClick={() => startEdit(admin)} title="සංස්කරණය / Edit" className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                          <button onClick={() => setShowDeleteModal(admin.id)} title="ඉවත් කරන්න / Delete" className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-600 hover:text-white transition-all shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                }) : (
+                  <tr>
+                    <td colSpan="5" className="p-8 text-center text-gray-400 italic">
+                      කිසිදු MOH පාලකවරයෙකු හමු නොවීය. (No MOH administrators found.)
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>

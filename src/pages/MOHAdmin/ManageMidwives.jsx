@@ -1,14 +1,39 @@
 import React, { useEffect, useState } from 'react';
-import { db } from '../../firebase/config';
-import { collection, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { auth, db } from '../../firebase/config';
+import { collection, query, where, getDocs, deleteDoc, doc, getDoc } from 'firebase/firestore';
 import MOHLayout from '../../components/MOHLayout';
+import { DISTRICTS, getMohAreas, findDistrictByMohArea } from '../../data/sriLankaLocations';
 
 const ManageMidwives = () => {
   const [midwives, setMidwives] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(null);
-  const mohArea = "Colombo"; 
+  const [district, setDistrict] = useState('Colombo');
+  const [mohArea, setMohArea] = useState('Colombo');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Load logged-in admin's assigned MOH area
+  useEffect(() => {
+    const fetchAdminProfile = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          const docSnap = await getDoc(doc(db, "moh_admins", user.uid));
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            const adminDistrict = data.district || findDistrictByMohArea(data.mohArea) || 'Colombo';
+            const adminMoh = data.mohArea || 'Colombo';
+            setDistrict(adminDistrict);
+            setMohArea(adminMoh);
+          }
+        } catch (err) {
+          console.error("Error fetching admin profile:", err);
+        }
+      }
+    };
+    fetchAdminProfile();
+  }, []);
 
   const fetchMidwivesWithStats = async () => {
     setLoading(true);
@@ -39,7 +64,17 @@ const ManageMidwives = () => {
 
   useEffect(() => {
     fetchMidwivesWithStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mohArea]);
+
+  const handleDistrictChange = (e) => {
+    const newDistrict = e.target.value;
+    setDistrict(newDistrict);
+    const mohs = getMohAreas(newDistrict);
+    if (mohs.length > 0) {
+      setMohArea(mohs[0]);
+    }
+  };
 
   const confirmDelete = async () => {
     if (showDeleteModal) {
@@ -55,6 +90,17 @@ const ManageMidwives = () => {
       }
     }
   };
+
+  const availableMohAreas = getMohAreas(district);
+
+  const filteredMidwives = midwives.filter(m => {
+    if (!searchTerm.trim()) return true;
+    const term = searchTerm.toLowerCase();
+    const name = (m.fullName || '').toLowerCase();
+    const area = (m.serviceArea || '').toLowerCase();
+    const empId = (m.employeeId || '').toLowerCase();
+    return name.includes(term) || area.includes(term) || empId.includes(term);
+  });
 
   return (
     <MOHLayout>
@@ -81,9 +127,52 @@ const ManageMidwives = () => {
         </div>
       )}
 
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-800">නිලධාරීන් කළමනාකරණය</h2>
-        <div className="text-[11px] font-black text-green-600 uppercase tracking-widest mt-1">Midwife Performance & Contact Registry</div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">නිලධාරීන් කළමනාකරණය</h2>
+          <div className="text-[11px] font-black text-green-600 uppercase tracking-widest mt-1">
+            Midwife Performance & Contact Registry - {mohArea} ({district})
+          </div>
+        </div>
+
+        {/* District & MOH Area Selectors */}
+        <div className="flex items-center gap-2">
+          <select
+            value={district}
+            onChange={handleDistrictChange}
+            className="p-2 bg-white border border-gray-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-green-500 outline-none shadow-sm"
+          >
+            {DISTRICTS.map(dist => (
+              <option key={dist} value={dist}>{dist}</option>
+            ))}
+          </select>
+
+          <select
+            value={mohArea}
+            onChange={(e) => setMohArea(e.target.value)}
+            className="p-2 bg-green-50 border border-green-200 text-green-800 rounded-xl text-xs font-bold focus:ring-2 focus:ring-green-500 outline-none shadow-sm"
+          >
+            {availableMohAreas.map(area => (
+              <option key={area} value={area}>{area}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Search Bar */}
+      <div className="mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between gap-4">
+        <div className="flex-1 max-w-md">
+          <input
+            type="text"
+            placeholder="නිලධාරිනියගේ නම, සේවක අංකය හෝ සේවා ප්‍රදේශය (PHM Area)..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-green-500 outline-none"
+          />
+        </div>
+        <span className="text-xs font-bold text-gray-400">
+          මුළු නිලධාරීන්: {filteredMidwives.length}
+        </span>
       </div>
 
       {loading ? (
@@ -98,14 +187,14 @@ const ManageMidwives = () => {
               <tr>
                 <th className="text-[13px] p-5 italic">නිලධාරිනිය (Midwife)</th>
                 <th className="text-[13px] p-5 italic">සම්බන්ධීකරණය (Contact)</th>
-                <th className="text-[13px] p-5 italic">සේවා ප්‍රදේශය (Area)</th>
+                <th className="text-[13px] p-5 italic">සේවා ප්‍රදේශය (PHM Area)</th>
                 <th className="text-[13px] p-5 text-center italic">මව්වරුන් (Mothers)</th>
                 <th className="text-[13px] p-5 text-center italic">අවදානම් (Risk)</th>
                 <th className="text-[13px] p-5 text-right italic">ක්‍රියා (Actions)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {midwives.map((midwife) => (
+              {filteredMidwives.length > 0 ? filteredMidwives.map((midwife) => (
                 <tr key={midwife.id} className="hover:bg-green-50/30 transition-colors">
                   <td className="p-5">
                     <div className="font-bold text-gray-800 text-[15px]">{midwife.fullName}</div>
@@ -116,7 +205,9 @@ const ManageMidwives = () => {
                     <div className="text-[10px] text-blue-500 font-medium lowercase text-[14px]">{midwife.email}</div>
                   </td>
                   <td className="p-5">
-                    <div className="text-xs font-bold text-gray-600 text-[15px]">{midwife.serviceArea}</div>
+                    <div className="text-xs font-bold text-gray-700 text-[15px] bg-green-50/60 px-3 py-1 rounded-lg inline-block">
+                      {midwife.serviceArea}
+                    </div>
                   </td>
                   <td className="p-5 text-center">
                     <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-[10px] font-black text-[15px]">{midwife.motherCount}</span>
@@ -137,7 +228,13 @@ const ManageMidwives = () => {
                     </div>
                   </td>
                 </tr>
-              ))}
+              )) : (
+                <tr>
+                  <td colSpan="6" className="p-16 text-center text-gray-400 italic">
+                    {mohArea} ප්‍රදේශයේ කිසිදු නිලධාරිනියකගේ දත්ත හමු නොවීය.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

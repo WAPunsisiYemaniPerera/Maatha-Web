@@ -1,18 +1,42 @@
 import React, { useEffect, useState } from 'react';
-import { db } from '../../firebase/config';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { auth, db } from '../../firebase/config';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import MOHLayout from '../../components/MOHLayout';
+import { DISTRICTS, getMohAreas, findDistrictByMohArea } from '../../data/sriLankaLocations';
 
 const AreaMothers = () => {
   const [mothers, setMothers] = useState([]);
   const [filteredMothers, setFilteredMothers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState({ risk: 'All', midwife: 'All' });
-  
-  const mohArea = "Colombo"; 
+  const [district, setDistrict] = useState('Colombo');
+  const [mohArea, setMohArea] = useState('Colombo');
+  const [filter, setFilter] = useState({ risk: 'All', midwife: 'All', search: '' });
+
+  // Load logged-in admin profile
+  useEffect(() => {
+    const fetchAdminProfile = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          const docSnap = await getDoc(doc(db, "moh_admins", user.uid));
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            const adminDistrict = data.district || findDistrictByMohArea(data.mohArea) || 'Colombo';
+            const adminMoh = data.mohArea || 'Colombo';
+            setDistrict(adminDistrict);
+            setMohArea(adminMoh);
+          }
+        } catch (err) {
+          console.error("Error fetching admin area:", err);
+        }
+      }
+    };
+    fetchAdminProfile();
+  }, []);
 
   useEffect(() => {
     const fetchMothers = async () => {
+      setLoading(true);
       try {
         const q = query(collection(db, "mothers"), where("mohArea", "==", mohArea));
         const querySnapshot = await getDocs(q);
@@ -28,41 +52,94 @@ const AreaMothers = () => {
     fetchMothers();
   }, [mohArea]);
 
-  
   useEffect(() => {
     let result = mothers;
     if (filter.risk !== 'All') {
       result = result.filter(m => m.riskStatus === filter.risk);
     }
     if (filter.midwife !== 'All') {
-      result = result.filter(m => m.midwifeName === filter.midwife);
+      result = result.filter(m => (m.midwifeName === filter.midwife || m.serviceArea === filter.midwife));
+    }
+    if (filter.search.trim()) {
+      const term = filter.search.toLowerCase();
+      result = result.filter(m => 
+        (m.fullName || '').toLowerCase().includes(term) ||
+        (m.nic || '').toLowerCase().includes(term)
+      );
     }
     setFilteredMothers(result);
   }, [filter, mothers]);
 
+  const handleDistrictChange = (e) => {
+    const newDistrict = e.target.value;
+    setDistrict(newDistrict);
+    const mohs = getMohAreas(newDistrict);
+    if (mohs.length > 0) {
+      setMohArea(mohs[0]);
+    }
+  };
+
   const highRiskCount = mothers.filter(m => m.riskStatus === 'High-Risk').length;
+  const availableMohAreas = getMohAreas(district);
+  const uniqueMidwives = Array.from(new Set(mothers.map(m => m.midwifeName).filter(Boolean)));
 
   return (
     <MOHLayout>
-      <div className="flex justify-between items-end mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">ප්‍රදේශයේ මව්වරුන්ගේ දත්ත</h2>
           <div className="text-[11px] font-black text-green-600 uppercase tracking-widest mt-1">
-            Comprehensive Maternal Health Tracking - {mohArea}
+            Comprehensive Maternal Health Tracking - {mohArea} ({district})
           </div>
         </div>
-        <div className="flex space-x-4">
+
+        <div className="flex items-center gap-3">
+          {/* District & MOH Area Selectors */}
+          <select
+            value={district}
+            onChange={handleDistrictChange}
+            className="p-2 bg-white border border-gray-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-green-500 outline-none shadow-sm"
+          >
+            {DISTRICTS.map(dist => (
+              <option key={dist} value={dist}>{dist}</option>
+            ))}
+          </select>
+
+          <select
+            value={mohArea}
+            onChange={(e) => setMohArea(e.target.value)}
+            className="p-2 bg-green-50 border border-green-200 text-green-800 rounded-xl text-xs font-bold focus:ring-2 focus:ring-green-500 outline-none shadow-sm"
+          >
+            {availableMohAreas.map(area => (
+              <option key={area} value={area}>{area}</option>
+            ))}
+          </select>
+
           <SummaryMiniCard label="මුළු මව්වරුන්" count={mothers.length} color="text-blue-600" />
           <SummaryMiniCard label="අධි-අවදානම්" count={highRiskCount} color="text-red-600" />
         </div>
       </div>
 
       {/* Filter Section */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm mb-6 flex flex-wrap gap-4 items-center border border-gray-100">
-        <div className="flex items-center space-x-2">
-          <span className="text-[10px] font-black text-gray-400 uppercase">පෙරීම (Filter by Risk):</span>
+      <div className="bg-white p-4 rounded-2xl shadow-sm mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4 items-center border border-gray-100">
+        {/* Search */}
+        <div>
+          <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">සොයන්න (Search Name / NIC):</span>
+          <input
+            type="text"
+            placeholder="නම හෝ NIC..."
+            value={filter.search}
+            onChange={(e) => setFilter({ ...filter, search: e.target.value })}
+            className="w-full text-xs font-medium p-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+          />
+        </div>
+
+        {/* Risk Filter */}
+        <div>
+          <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">පෙරීම (Filter by Risk):</span>
           <select 
-            className="text-xs font-bold p-2 bg-gray-50 border-none rounded-lg focus:ring-2 focus:ring-green-500"
+            className="w-full text-xs font-bold p-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+            value={filter.risk}
             onChange={(e) => setFilter({ ...filter, risk: e.target.value })}
           >
             <option value="All">සියලුම දෙනා (All)</option>
@@ -72,14 +149,17 @@ const AreaMothers = () => {
         </div>
         
         {/* Midwife Filter */}
-        <div className="flex items-center space-x-2">
-          <span className="text-[10px] font-black text-gray-400 uppercase">නිලධාරිනිය (By Midwife):</span>
+        <div>
+          <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">නිලධාරිනිය (By Midwife):</span>
           <select 
-            className="text-xs font-bold p-2 bg-gray-50 border-none rounded-lg focus:ring-2 focus:ring-green-500"
+            className="w-full text-xs font-bold p-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+            value={filter.midwife}
             onChange={(e) => setFilter({ ...filter, midwife: e.target.value })}
           >
-            <option value="All">සියලුම නිලධාරිනියන්</option>
-            {/* Array.from(new Set(mothers.map(m => m.midwifeName))).map(...) */}
+            <option value="All">සියලුම නිලධාරිනියන් (All Midwives)</option>
+            {uniqueMidwives.map(name => (
+              <option key={name} value={name}>{name}</option>
+            ))}
           </select>
         </div>
       </div>
@@ -94,8 +174,8 @@ const AreaMothers = () => {
                 <th className="p-5">මවගේ විස්තර (Mother's Details)</th>
                 <th className="p-5">තත්ත්වය (Status)</th>
                 <th className="p-5">අදාළ නිලධාරිනිය (Midwife)</th>
+                <th className="p-5">සේවා ප්‍රදේශය (PHM Area)</th>
                 <th className="p-5">දිස්ත්‍රික්කය (District)</th>
-                <th className="p-5 text-right">ක්‍රියා (Actions)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -113,21 +193,24 @@ const AreaMothers = () => {
                     </span>
                   </td>
                   <td className="p-5">
-                    <div className="text-xs font-bold text-gray-600">{mother.midwifeName || 'Not Assigned'}</div>
-                    <div className="text-[10px] text-gray-400">{mother.serviceArea}</div>
+                    <div className="text-xs font-bold text-gray-700">{mother.midwifeName || 'Not Assigned'}</div>
                   </td>
-                  <td className="p-5 text-xs font-medium text-gray-500">{mother.district}</td>
-                  <td className="p-5 text-right">
-                    <button className="bg-slate-900 text-white text-[10px] font-black uppercase px-4 py-2 rounded-lg hover:bg-slate-800 transition-all shadow-sm">
-                      View Profile
-                    </button>
+                  <td className="p-5">
+                    <div className="text-xs font-medium text-gray-600 bg-green-50/50 px-2.5 py-1 rounded-md inline-block">
+                      {mother.serviceArea || mother.phmArea || '—'}
+                    </div>
+                  </td>
+                  <td className="p-5 text-xs font-medium text-gray-500">
+                    {mother.district || district}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
           {filteredMothers.length === 0 && (
-            <div className="p-10 text-center text-gray-400 italic text-sm">හමු වූ දත්ත කිසිවක් නැත. (No records found)</div>
+            <div className="p-10 text-center text-gray-400 italic text-sm">
+              {mohArea} ප්‍රදේශය සඳහා හමු වූ දත්ත කිසිවක් නැත. (No records found)
+            </div>
           )}
         </div>
       )}
@@ -136,7 +219,7 @@ const AreaMothers = () => {
 };
 
 const SummaryMiniCard = ({ label, count, color }) => (
-  <div className="bg-white px-6 py-2 rounded-xl shadow-sm border border-gray-100 text-center">
+  <div className="bg-white px-5 py-2 rounded-xl shadow-sm border border-gray-100 text-center">
     <div className="text-[9px] font-black text-gray-400 uppercase">{label}</div>
     <div className={`text-xl font-black ${color}`}>{count}</div>
   </div>

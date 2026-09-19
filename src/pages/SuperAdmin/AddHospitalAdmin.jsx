@@ -3,6 +3,7 @@ import { auth, db } from '../../firebase/config';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, collection, getDocs, deleteDoc, updateDoc } from 'firebase/firestore';
 import AdminLayout from '../../components/AdminLayout';
+import { DISTRICTS } from '../../data/sriLankaLocations';
 
 const AddHospitalAdmin = () => {
   const [formData, setFormData] = useState({
@@ -17,6 +18,7 @@ const AddHospitalAdmin = () => {
   const [message, setMessage] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(null); 
+  const [tableDistrictFilter, setTableDistrictFilter] = useState('All');
 
   const fetchHospitalAdmins = async () => {
     try {
@@ -38,6 +40,11 @@ const AddHospitalAdmin = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.district) {
+      setMessage("කරුණාකර දිස්ත්‍රික්කය තෝරන්න (Please select a District)");
+      return;
+    }
+
     setLoading(true);
     setMessage('');
 
@@ -100,14 +107,19 @@ const AddHospitalAdmin = () => {
   const startEdit = (admin) => {
     setEditingId(admin.id);
     setFormData({
-      name: admin.fullName,
-      hospitalName: admin.hospitalName,
-      district: admin.district,
-      email: admin.email,
+      name: admin.fullName || '',
+      hospitalName: admin.hospitalName || '',
+      district: admin.district || '',
+      email: admin.email || '',
       password: '*****' 
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const filteredAdmins = admins.filter(admin => {
+    if (tableDistrictFilter === 'All') return true;
+    return admin.district === tableDistrictFilter;
+  });
 
   return (
     <AdminLayout>
@@ -158,32 +170,87 @@ const AddHospitalAdmin = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700">පාලකවරයාගේ නම (Admin Name)</label>
-              <input type="text" name="name" value={formData.name} onChange={handleChange} required className="w-full p-2 border rounded mt-1 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+              <label className="block text-xs font-bold text-gray-700 mb-1">
+                පාලකවරයාගේ නම (Admin Name) <span className="text-red-500">*</span>
+              </label>
+              <input 
+                type="text" 
+                name="name" 
+                placeholder="උදා: Dr. N. Wickramasinghe"
+                value={formData.name} 
+                onChange={handleChange} 
+                required 
+                className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium" 
+              />
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700">රෝහලේ නම (Hospital Name)</label>
-                <input type="text" name="hospitalName" value={formData.hospitalName} onChange={handleChange} required className="w-full p-2 border rounded mt-1 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  රෝහලේ නම (Hospital Name) <span className="text-red-500">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  name="hospitalName" 
+                  placeholder="උදා: National Hospital of Sri Lanka"
+                  value={formData.hospitalName} 
+                  onChange={handleChange} 
+                  required 
+                  className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium" 
+                />
               </div>
+
+              {/* District Dropdown */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700">දිස්ත්‍රික්කය (District)</label>
-                <input type="text" name="district" value={formData.district} onChange={handleChange} required className="w-full p-2 border rounded mt-1 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  දිස්ත්‍රික්කය (District) <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="district"
+                  value={formData.district}
+                  onChange={handleChange}
+                  required
+                  className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium bg-white"
+                >
+                  <option value="">-- දිස්ත්‍රික්කය තෝරන්න (Select District) --</option>
+                  {DISTRICTS.map(dist => (
+                    <option key={dist} value={dist}>{dist}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
             {!editingId && (
-              <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700">ඊමේල් ලිපිනය (Email Address)</label>
-                  <input type="email" name="email" value={formData.email} onChange={handleChange} required className="w-full p-2 border rounded mt-1 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    ඊමේල් ලිපිනය (Email Address) <span className="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="email" 
+                    name="email" 
+                    placeholder="hospital.admin@health.gov.lk"
+                    value={formData.email} 
+                    onChange={handleChange} 
+                    required 
+                    className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium" 
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700">මුරපදය (Password)</label>
-                  <input type="password" name="password" value={formData.password} onChange={handleChange} required className="w-full p-2 border rounded mt-1 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    මුරපදය (Password) <span className="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="password" 
+                    name="password" 
+                    placeholder="••••••••"
+                    value={formData.password} 
+                    onChange={handleChange} 
+                    required 
+                    className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium" 
+                  />
                 </div>
-              </>
+              </div>
             )}
 
             <div className="flex space-x-3 pt-4">
@@ -200,11 +267,28 @@ const AddHospitalAdmin = () => {
           </form>
         </div>
 
-        
+        {/* Existing Hospital Admins Table */}
         <div className="bg-white p-8 rounded-lg shadow-md border-t-4 border-slate-700">
-          <div className="mb-6">
-            <h2 className="text-xl font-bold text-gray-800">දැනට සිටින රෝහල් පාලකවරුන්</h2>
-            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Registered Hospital Administrators</div>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-xl font-bold text-gray-800">දැනට සිටින රෝහල් පාලකවරුන්</h2>
+              <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Registered Hospital Administrators</div>
+            </div>
+
+            {/* Filter by District */}
+            <div className="flex items-center space-x-2">
+              <span className="text-xs font-bold text-gray-500 whitespace-nowrap">දිස්ත්‍රික්කය අනුව පෙරීම:</span>
+              <select
+                value={tableDistrictFilter}
+                onChange={(e) => setTableDistrictFilter(e.target.value)}
+                className="p-2 border rounded-lg text-xs font-bold bg-gray-50 focus:ring-2 focus:ring-blue-500 outline-none"
+              >
+                <option value="All">සියලුම දිස්ත්‍රික්ක (All)</option>
+                {DISTRICTS.map(dist => (
+                  <option key={dist} value={dist}>{dist}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
@@ -214,24 +298,26 @@ const AddHospitalAdmin = () => {
                   <th className="p-3">නම (Name)</th>
                   <th className="p-3">රෝහල (Hospital)</th>
                   <th className="p-3">දිස්ත්‍රික්කය (District)</th>
+                  <th className="p-3">ඊමේල් (Email)</th>
                   <th className="p-3 text-center">ක්‍රියාකාරකම් (Actions)</th>
                 </tr>
               </thead>
               <tbody className="text-sm text-gray-700 divide-y divide-gray-100">
-                {admins.length > 0 ? admins.map(admin => (
+                {filteredAdmins.length > 0 ? filteredAdmins.map(admin => (
                   <tr key={admin.id} className="hover:bg-gray-50 transition">
                     <td className="p-3 font-semibold text-gray-700">{admin.fullName}</td>
                     <td className="p-3">{admin.hospitalName}</td>
-                    <td className="p-3">{admin.district}</td>
+                    <td className="p-3 font-medium text-blue-600">{admin.district}</td>
+                    <td className="p-3 text-xs text-gray-500 font-mono">{admin.email}</td>
                     <td className="p-3 text-center">
                       <div className="flex justify-center space-x-2">
                         <button onClick={() => startEdit(admin)} title="සංස්කරණය / Edit" className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-600 hover:text-white transition-all shadow-sm">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                           </svg>
                         </button>
                         <button onClick={() => setShowDeleteModal(admin.id)} title="ඉවත් කරන්න / Delete" className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-600 hover:text-white transition-all shadow-sm">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
                         </button>
@@ -240,7 +326,7 @@ const AddHospitalAdmin = () => {
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan="4" className="p-10 text-center text-gray-400 italic">කිසිදු රෝහල් පාලකවරයෙකු හමු නොවීය. No administrators found.</td>
+                    <td colSpan="5" className="p-10 text-center text-gray-400 italic">කිසිදු රෝහල් පාලකවරයෙකු හමු නොවීය. No administrators found.</td>
                   </tr>
                 )}
               </tbody>
