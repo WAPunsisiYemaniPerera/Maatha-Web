@@ -4,7 +4,7 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, collection, getDocs, deleteDoc, updateDoc } from 'firebase/firestore';
 import AdminLayout from '../../components/AdminLayout';
 import { DISTRICTS } from '../../data/sriLankaLocations';
-import { isValidEmail, checkEmailUniqueness, evaluatePasswordStrength, formatAuthError } from '../../utils/securityValidators';
+import { isValidEmail, isValidNIC, checkEmailUniqueness, checkNICUniqueness, evaluatePasswordStrength, formatAuthError } from '../../utils/securityValidators';
 import PasswordSecurityField from '../../components/PasswordSecurityField';
 
 const HOSPITAL_TYPES = [
@@ -92,12 +92,19 @@ const AddHospitalAdmin = () => {
       showToast("කරුණාකර දිස්ත්‍රික්කය තෝරන්න (Please select a District)", 'error');
       return;
     }
-    if (!formData.adminNic.trim()) {
+
+    const cleanNIC = (formData.adminNic || '').trim().toUpperCase();
+    const cleanEmail = (formData.email || '').trim().toLowerCase();
+
+    if (!cleanNIC) {
       showToast("කරුණාකර පාලකවරයාගේ ජාතික හැඳුනුම්පත් අංකය (NIC) ඇතුළත් කරන්න", 'error');
       return;
     }
 
-    const cleanEmail = formData.email.trim().toLowerCase();
+    if (!isValidNIC(cleanNIC)) {
+      showToast("වලංගු ජාතික හැඳුනුම්පත් අංකයක් (NIC) ඇතුළත් කරන්න (උදා: 198012345678 හෝ 801234567V)", 'error');
+      return;
+    }
 
     if (!isValidEmail(cleanEmail)) {
       showToast("වලංගු ඊමේල් ලිපිනයක් ඇතුළත් කරන්න (Please enter a valid email address)", 'error');
@@ -106,6 +113,22 @@ const AddHospitalAdmin = () => {
 
     setLoading(true);
     try {
+      // 1. Strict NIC Uniqueness Check across the entire health system
+      const nicCheck = await checkNICUniqueness(db, cleanNIC, editingId);
+      if (!nicCheck.isUnique) {
+        showToast(`මෙම ජාතික හැඳුනුම්පත් අංකය (NIC: ${cleanNIC}) දැනටමත් ${nicCheck.role} සඳහා ලියාපදිංචි කර ඇත. එක් අයෙකුට ලියාපදිංචි විය හැක්කේ එක් වරක් පමණි.`, 'error');
+        setLoading(false);
+        return;
+      }
+
+      // 2. Strict Email Uniqueness Check across the entire health system
+      const emailAvailable = await checkEmailUniqueness(db, cleanEmail, editingId);
+      if (!emailAvailable) {
+        showToast(`මෙම ඊමේල් ලිපිනය (${cleanEmail}) දැනටමත් පද්ධතියේ ලියාපදිංචි කර ඇත. කරුණාකර වෙනත් ඊමේල් ලිපිනයක් භාවිතා කරන්න.`, 'error');
+        setLoading(false);
+        return;
+      }
+
       if (editingId) {
         await updateDoc(doc(db, "hospital_admins", editingId), {
           hospitalName: formData.hospitalName.trim(),
@@ -120,7 +143,7 @@ const AddHospitalAdmin = () => {
           hasBloodBank: formData.hasBloodBank,
           hasLabourRoom: formData.hasLabourRoom,
           fullName: formData.adminName.trim(),
-          adminNic: formData.adminNic.trim().toUpperCase(),
+          adminNic: cleanNIC,
           slmcNumber: formData.slmcNumber.trim(),
           designation: formData.designation,
           gender: formData.gender,
@@ -130,14 +153,6 @@ const AddHospitalAdmin = () => {
         });
         showToast("රෝහල් සහ පාලක විස්තර සාර්ථකව යාවත්කාලීන කරන ලදී! (Details Updated Successfully)");
       } else {
-        // Email Uniqueness Pre-check
-        const emailAvailable = await checkEmailUniqueness(db, cleanEmail);
-        if (!emailAvailable) {
-          showToast("මෙම ඊමේල් ලිපිනය දැනටමත් පද්ධතියේ වෙනත් ගිණුමක් සඳහා ලියාපදිංචි කර ඇත. (Email already in use)", 'error');
-          setLoading(false);
-          return;
-        }
-
         // Password Strength Validation (Salted & Hashed by Firebase Auth)
         const strength = evaluatePasswordStrength(formData.password);
         if (strength.score < 3 || !strength.criteria.hasMinLength) {
@@ -156,6 +171,7 @@ const AddHospitalAdmin = () => {
           role: "hospital_admin",
           fullName: formData.adminName.trim(),
           hospitalName: formData.hospitalName.trim(),
+          nic: cleanNIC,
           uid: uid,
           createdAt: new Date()
         });
@@ -174,7 +190,7 @@ const AddHospitalAdmin = () => {
           hasBloodBank: formData.hasBloodBank,
           hasLabourRoom: formData.hasLabourRoom,
           fullName: formData.adminName.trim(),
-          adminNic: formData.adminNic.trim().toUpperCase(),
+          adminNic: cleanNIC,
           slmcNumber: formData.slmcNumber.trim(),
           designation: formData.designation,
           gender: formData.gender,

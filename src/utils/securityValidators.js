@@ -4,24 +4,96 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
  * Validates whether an email address adheres to proper RFC email format.
  */
 export const isValidEmail = (email) => {
+  if (!email) return false;
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   return emailRegex.test(String(email).trim());
 };
 
 /**
- * Checks if an email is already in use across Firestore `users` collection.
+ * Validates Sri Lankan National Identity Card (NIC) format:
+ * - Old format: 9 digits followed by 'V' or 'X' (e.g. 851234567V)
+ * - New format: 12 digits (e.g. 198512345678)
  */
-export const checkEmailUniqueness = async (db, email) => {
+export const isValidNIC = (nic) => {
+  if (!nic) return false;
+  const cleanNIC = String(nic).trim().toUpperCase();
+  const oldNicRegex = /^[0-9]{9}[VX]$/;
+  const newNicRegex = /^[0-9]{12}$/;
+  return oldNicRegex.test(cleanNIC) || newNicRegex.test(cleanNIC);
+};
+
+/**
+ * Checks if an email is already in use across Firestore `users`, `moh_admins`, `hospital_admins`, or `midwives`.
+ * Supports excludeId for edit operations.
+ */
+export const checkEmailUniqueness = async (db, email, excludeId = null) => {
   if (!email || !isValidEmail(email)) return false;
   const normalizedEmail = email.toLowerCase().trim();
   
   try {
-    const q = query(collection(db, "users"), where("email", "==", normalizedEmail));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.empty; // true if email is unique (not taken)
+    const collectionsToCheck = [
+      { name: "users", field: "email" },
+      { name: "moh_admins", field: "email" },
+      { name: "hospital_admins", field: "email" },
+      { name: "midwives", field: "email" }
+    ];
+
+    for (const col of collectionsToCheck) {
+      const q = query(collection(db, col.name), where(col.field, "==", normalizedEmail));
+      const querySnapshot = await getDocs(q);
+      for (const doc of querySnapshot.docs) {
+        if (!excludeId || doc.id !== excludeId) {
+          return false; // Already taken
+        }
+      }
+    }
+
+    return true; // Unique
   } catch (error) {
     console.error("Email uniqueness check error:", error);
     return true; // Fallback to Firebase Auth's internal email uniqueness check
+  }
+};
+
+/**
+ * Checks if a National Identity Card (NIC) is already registered across:
+ * - `moh_admins` (field `nic`)
+ * - `hospital_admins` (field `adminNic`)
+ * - `midwives` (field `nic`)
+ * - `mothers` (field `nic`)
+ * 
+ * Supports excludeId for edit operations.
+ */
+export const checkNICUniqueness = async (db, nic, excludeId = null) => {
+  if (!nic) return false;
+  const normalizedNIC = String(nic).trim().toUpperCase();
+
+  try {
+    const checks = [
+      { col: "moh_admins", field: "nic", role: "MOH Officer (සෞඛ්‍ය වෛද්‍ය නිලධාරී)" },
+      { col: "hospital_admins", field: "adminNic", role: "Hospital Administrator (රෝහල් පාලක)" },
+      { col: "midwives", field: "nic", role: "Public Health Midwife (පවුල් සෞඛ්‍ය නිලධාරිනී)" },
+      { col: "mothers", field: "nic", role: "Registered Mother (ලියාපදිංචි මව)" }
+    ];
+
+    for (const check of checks) {
+      const q = query(collection(db, check.col), where(check.field, "==", normalizedNIC));
+      const snapshot = await getDocs(q);
+      for (const doc of snapshot.docs) {
+        if (!excludeId || doc.id !== excludeId) {
+          return {
+            isUnique: false,
+            role: check.role,
+            id: doc.id
+          };
+        }
+      }
+    }
+
+    return { isUnique: true };
+  } catch (error) {
+    console.error("NIC uniqueness check error:", error);
+    return { isUnique: true };
   }
 };
 

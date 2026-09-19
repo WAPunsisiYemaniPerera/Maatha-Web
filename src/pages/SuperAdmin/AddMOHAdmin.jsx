@@ -5,7 +5,7 @@ import { doc, setDoc, collection, getDocs, deleteDoc, updateDoc } from 'firebase
 import AdminLayout from '../../components/AdminLayout';
 import { DISTRICTS, getMohAreas, findDistrictByMohArea } from '../../data/sriLankaLocations';
 import PasswordSecurityField from '../../components/PasswordSecurityField';
-import { checkEmailUniqueness, evaluatePasswordStrength, formatAuthError, isValidEmail } from '../../utils/securityValidators';
+import { checkEmailUniqueness, checkNICUniqueness, evaluatePasswordStrength, formatAuthError, isValidEmail, isValidNIC } from '../../utils/securityValidators';
 
 const DESIGNATIONS = [
   'Medical Officer of Health (MOH)',
@@ -83,42 +83,54 @@ const AddMOHAdmin = () => {
       showToast("කරුණාකර MOH ප්‍රදේශය තෝරන්න (Please select an MOH Area)", 'error');
       return;
     }
-    if (!formData.nic.trim()) {
+
+    const cleanNIC = (formData.nic || '').trim().toUpperCase();
+    const cleanEmail = (formData.email || '').trim().toLowerCase();
+
+    if (!cleanNIC) {
       showToast("කරුණාකර ජාතික හැඳුනුම්පත් අංකය (NIC) ඇතුළත් කරන්න", 'error');
       return;
     }
-    if (!isValidEmail(formData.email)) {
+
+    if (!isValidNIC(cleanNIC)) {
+      showToast("වලංගු ජාතික හැඳුනුම්පත් අංකයක් (NIC) ඇතුළත් කරන්න (උදා: 198512345678 හෝ 851234567V)", 'error');
+      return;
+    }
+
+    if (!isValidEmail(cleanEmail)) {
       showToast("වලංගු නොවන ඊමේල් ලිපිනයකි. (Please provide a valid email format)", 'error');
       return;
     }
 
-    // On new creation: Validate email uniqueness and password strength
-    if (!editingId) {
-      const isUnique = await checkEmailUniqueness(db, formData.email);
-      if (!isUnique) {
-        showToast("මෙම ඊමේල් ලිපිනය දැනටමත් වෙනත් ගිණුමක් සඳහා ලියාපදිංචි කර ඇත. (This email is already in use)", 'error');
-        return;
-      }
-
-      const strength = evaluatePasswordStrength(formData.password);
-      if (!strength.isValid) {
-        showToast("මුරපදය ප්‍රමාණවත් තරම් ශක්තිමත් නැත. අවම වශයෙන් අකුරු 8ක්, අංක සහ විශේෂ සංකේත යොදන්න. (Password is too weak)", 'error');
-        return;
-      }
-    }
-
     setLoading(true);
+
     try {
+      // 1. Strict NIC Uniqueness Check across the entire health system
+      const nicCheck = await checkNICUniqueness(db, cleanNIC, editingId);
+      if (!nicCheck.isUnique) {
+        showToast(`මෙම ජාතික හැඳුනුම්පත් අංකය (NIC: ${cleanNIC}) දැනටමත් ${nicCheck.role} සඳහා ලියාපදිංචි කර ඇත. එක් අයෙකුට ලියාපදිංචි විය හැක්කේ එක් වරක් පමණි.`, 'error');
+        setLoading(false);
+        return;
+      }
+
+      // 2. Strict Email Uniqueness Check across the entire health system
+      const emailUnique = await checkEmailUniqueness(db, cleanEmail, editingId);
+      if (!emailUnique) {
+        showToast(`මෙම ඊමේල් ලිපිනය (${cleanEmail}) දැනටමත් පද්ධතියේ ලියාපදිංචි කර ඇත. කරුණාකර වෙනත් ඊමේල් ලිපිනයක් භාවිතා කරන්න.`, 'error');
+        setLoading(false);
+        return;
+      }
+
       if (editingId) {
         await updateDoc(doc(db, "moh_admins", editingId), {
-          fullName: formData.fullName,
-          nic: formData.nic,
-          slmcNumber: formData.slmcNumber,
+          fullName: formData.fullName.trim(),
+          nic: cleanNIC,
+          slmcNumber: formData.slmcNumber.trim(),
           designation: formData.designation,
           gender: formData.gender,
-          phone: formData.phone,
-          officePhone: formData.officePhone,
-          officeAddress: formData.officeAddress,
+          phone: formData.phone.trim(),
+          officePhone: formData.officePhone.trim(),
+          officeAddress: formData.officeAddress.trim(),
           district: formData.district,
           mohArea: formData.mohArea,
           appointmentDate: formData.appointmentDate,
@@ -127,28 +139,38 @@ const AddMOHAdmin = () => {
         });
         showToast("MOH නිලධාරී විස්තර සාර්ථකව යාවත්කාලීන කරන ලදී! (Officer Details Updated)");
       } else {
-        const userCredential = await createUserWithEmailAndPassword(auth, formData.email.toLowerCase().trim(), formData.password);
+        // Password strength validation
+        const strength = evaluatePasswordStrength(formData.password);
+        if (!strength.isValid || strength.score < 3) {
+          showToast("මුරපදය ප්‍රමාණවත් තරම් ශක්තිමත් නැත. අවම වශයෙන් අකුරු 8ක්, ලොකු/කුඩා අකුරු, අංක සහ විශේෂ සංකේත යොදන්න.", 'error');
+          setLoading(false);
+          return;
+        }
+
+        // Firebase Auth user creation (scrypt salt & hash)
+        const userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, formData.password);
         const uid = userCredential.user.uid;
 
         // Note: Password is encrypted & salted on Firebase Auth via scrypt. NEVER stored in plaintext in Firestore!
         await setDoc(doc(db, "users", uid), {
-          email: formData.email.toLowerCase().trim(),
+          email: cleanEmail,
           role: "moh_admin",
-          fullName: formData.fullName,
+          fullName: formData.fullName.trim(),
+          nic: cleanNIC,
           uid,
           createdAt: new Date()
         });
 
         await setDoc(doc(db, "moh_admins", uid), {
-          fullName: formData.fullName,
-          nic: formData.nic,
-          slmcNumber: formData.slmcNumber,
+          fullName: formData.fullName.trim(),
+          nic: cleanNIC,
+          slmcNumber: formData.slmcNumber.trim(),
           designation: formData.designation,
           gender: formData.gender,
-          phone: formData.phone,
-          officePhone: formData.officePhone,
-          email: formData.email.toLowerCase().trim(),
-          officeAddress: formData.officeAddress,
+          phone: formData.phone.trim(),
+          officePhone: formData.officePhone.trim(),
+          email: cleanEmail,
+          officeAddress: formData.officeAddress.trim(),
           district: formData.district,
           mohArea: formData.mohArea,
           appointmentDate: formData.appointmentDate,

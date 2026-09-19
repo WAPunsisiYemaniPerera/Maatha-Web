@@ -4,7 +4,7 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, collection, getDocs, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import MOHLayout from '../../components/MOHLayout';
 import { DISTRICTS, getMohAreas, findDistrictByMohArea } from '../../data/sriLankaLocations';
-import { isValidEmail, checkEmailUniqueness, evaluatePasswordStrength, formatAuthError } from '../../utils/securityValidators';
+import { isValidEmail, isValidNIC, checkEmailUniqueness, checkNICUniqueness, evaluatePasswordStrength, formatAuthError } from '../../utils/securityValidators';
 import PasswordSecurityField from '../../components/PasswordSecurityField';
 
 const AddMidwife = () => {
@@ -31,7 +31,7 @@ const AddMidwife = () => {
   const showToast = (msg, type = 'success') => {
     setMessage(msg);
     setMessageType(type);
-    setTimeout(() => setMessage(''), 4000);
+    setTimeout(() => setMessage(''), 5000);
   };
 
   // Load logged-in MOH Admin details
@@ -95,7 +95,18 @@ const AddMidwife = () => {
       return;
     }
 
-    const cleanEmail = formData.email.trim().toLowerCase();
+    const cleanNIC = (formData.nic || '').trim().toUpperCase();
+    const cleanEmail = (formData.email || '').trim().toLowerCase();
+
+    if (!cleanNIC) {
+      showToast("කරුණාකර ජාතික හැඳුනුම්පත් අංකය (NIC) ඇතුළත් කරන්න", 'error');
+      return;
+    }
+
+    if (!isValidNIC(cleanNIC)) {
+      showToast("වලංගු ජාතික හැඳුනුම්පත් අංකයක් (NIC) ඇතුළත් කරන්න (උදා: 198512345678 හෝ 851234567V)", 'error');
+      return;
+    }
 
     if (!isValidEmail(cleanEmail)) {
       showToast("වලංගු ඊමේල් ලිපිනයක් ඇතුළත් කරන්න (Please enter a valid email address)", 'error');
@@ -104,9 +115,26 @@ const AddMidwife = () => {
 
     setLoading(true);
     try {
+      // 1. Strict NIC Uniqueness Check across the entire health system
+      const nicCheck = await checkNICUniqueness(db, cleanNIC, editingId);
+      if (!nicCheck.isUnique) {
+        showToast(`මෙම ජාතික හැඳුනුම්පත් අංකය (NIC: ${cleanNIC}) දැනටමත් ${nicCheck.role} සඳහා ලියාපදිංචි කර ඇත. එක් අයෙකුට ලියාපදිංචි විය හැක්කේ එක් වරක් පමණි.`, 'error');
+        setLoading(false);
+        return;
+      }
+
+      // 2. Strict Email Uniqueness Check across the entire health system
+      const emailAvailable = await checkEmailUniqueness(db, cleanEmail, editingId);
+      if (!emailAvailable) {
+        showToast(`මෙම ඊමේල් ලිපිනය (${cleanEmail}) දැනටමත් පද්ධතියේ ලියාපදිංචි කර ඇත. කරුණාකර වෙනත් ඊමේල් ලිපිනයක් භාවිතා කරන්න.`, 'error');
+        setLoading(false);
+        return;
+      }
+
       if (editingId) {
         await updateDoc(doc(db, "midwives", editingId), {
           fullName: formData.fullName.trim(),
+          nic: cleanNIC,
           phone: formData.phone.trim(),
           district: formData.district,
           mohArea: formData.mohOffice,
@@ -115,16 +143,8 @@ const AddMidwife = () => {
           employeeId: formData.employeeId.trim(),
           updatedAt: new Date()
         });
-        showToast("නිලධාරිනියගේ විස්තර යාවත්කාලීන කරන ලදී! (Details Updated)");
+        showToast("නිලධාරිනියගේ විස්තර සාර්ථකව යාවත්කාලීන කරන ලදී! (Details Updated)");
       } else {
-        // Strict Email Uniqueness Check
-        const emailAvailable = await checkEmailUniqueness(db, cleanEmail);
-        if (!emailAvailable) {
-          showToast("මෙම ඊමේල් ලිපිනය දැනටමත් පද්ධතියේ වෙනත් ගිණුමක් සඳහා ලියාපදිංචි කර ඇත. (Email already registered)", 'error');
-          setLoading(false);
-          return;
-        }
-
         // Strong Password Validation
         const strength = evaluatePasswordStrength(formData.password);
         if (strength.score < 3 || !strength.criteria.hasMinLength) {
@@ -142,6 +162,7 @@ const AddMidwife = () => {
           email: cleanEmail,
           role: "midwife",
           fullName: formData.fullName.trim(),
+          nic: cleanNIC,
           mohArea: formData.mohOffice,
           uid: uid,
           createdAt: new Date()
@@ -150,7 +171,7 @@ const AddMidwife = () => {
         // Midwife Profile Document (Strictly NO plaintext password)
         await setDoc(doc(db, "midwives", uid), {
           fullName: formData.fullName.trim(),
-          nic: formData.nic.trim().toUpperCase(),
+          nic: cleanNIC,
           phone: formData.phone.trim(),
           email: cleanEmail,
           employeeId: formData.employeeId.trim(),
