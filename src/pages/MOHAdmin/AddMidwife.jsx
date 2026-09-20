@@ -5,7 +5,7 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, collection, getDocs, getDoc, deleteDoc, updateDoc, query, where } from 'firebase/firestore';
 import MOHLayout from '../../components/MOHLayout';
 import ModalPortal from '../../components/ModalPortal';
-import { DISTRICTS, getMohAreas, findDistrictByMohArea } from '../../data/sriLankaLocations';
+import { findDistrictByMohArea } from '../../data/sriLankaLocations';
 import { isValidEmail, isValidNIC, checkEmailUniqueness, checkNICUniqueness, evaluatePasswordStrength, formatAuthError } from '../../utils/securityValidators';
 import PasswordSecurityField from '../../components/PasswordSecurityField';
 
@@ -112,29 +112,7 @@ const AddMidwife = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === 'district') {
-      const mohs = getMohAreas(value);
-      setFormData(prev => ({
-        ...prev,
-        district: value,
-        mohOffice: mohs.length > 0 ? mohs[0] : '',
-        serviceArea: '',
-        gnDivisions: ''
-      }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
-  };
-
-  // When MOH changes, reset area
-  const handleMohChange = (e) => {
-    const val = e.target.value;
-    setFormData(prev => ({
-      ...prev,
-      mohOffice: val,
-      serviceArea: '',
-      gnDivisions: ''
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   // When PHM area is selected from dropdown
@@ -310,8 +288,6 @@ const AddMidwife = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const availableMohAreas = getMohAreas(formData.district);
-
   return (
     <MOHLayout>
       {/* Popups & Modals */}
@@ -382,22 +358,15 @@ const AddMidwife = () => {
                 <InputField label="දුරකථන අංකය" sub="Phone Number" name="phone" value={formData.phone} onChange={handleChange} placeholder="උදා: 0771234567" required />
                 <InputField label="සේවක / නිල හැඳුනුම් අංකය" sub="PHM Employee ID" name="employeeId" value={formData.employeeId} onChange={handleChange} placeholder="උදා: PHM-HOM-042" required />
 
-                {/* District Selector */}
+                {/* Locked District Field */}
                 <div>
                   <label className="block text-xs font-black text-slate-700 mb-1.5 uppercase tracking-wider">
-                    දිස්ත්‍රික්කය <span className="text-[10px] text-slate-400 font-normal ml-1">(District)</span>
+                    දිස්ත්‍රික්කය <span className="text-[10px] text-slate-400 font-normal ml-1">(District — Assigned Official)</span>
                   </label>
-                  <select
-                    name="district"
-                    value={formData.district}
-                    onChange={handleChange}
-                    required
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none text-xs sm:text-sm font-semibold text-slate-800 transition-all"
-                  >
-                    {DISTRICTS.map(dist => (
-                      <option key={dist} value={dist}>{dist}</option>
-                    ))}
-                  </select>
+                  <div className="p-3 bg-slate-100 border border-slate-200 rounded-2xl text-xs sm:text-sm font-bold text-slate-700 flex items-center justify-between">
+                    <span>{formData.district}</span>
+                    <span className="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider">🔒 Locked</span>
+                  </div>
                 </div>
               </div>
 
@@ -405,22 +374,15 @@ const AddMidwife = () => {
               <div className="space-y-4">
                 <InputField label="නිල විද්‍යුත් තැපෑල (App Login)" sub="Official Email Address" name="email" type="email" value={formData.email} onChange={handleChange} placeholder="උදා: sunethra.phm@maatha.lk" required disabled={!!editingId} />
 
-                {/* MOH Area Selector */}
+                {/* Locked MOH Area Field */}
                 <div>
                   <label className="block text-xs font-black text-slate-700 mb-1.5 uppercase tracking-wider">
-                    MOH බලප්‍රදේශය <span className="text-[10px] text-slate-400 font-normal ml-1">(MOH Division)</span>
+                    MOH බලප්‍රදේශය <span className="text-[10px] text-slate-400 font-normal ml-1">(MOH Division — Assigned Official)</span>
                   </label>
-                  <select
-                    name="mohOffice"
-                    value={formData.mohOffice}
-                    onChange={handleMohChange}
-                    required
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none text-xs sm:text-sm font-semibold text-slate-800 transition-all"
-                  >
-                    {availableMohAreas.map(area => (
-                      <option key={area} value={area}>{area}</option>
-                    ))}
-                  </select>
+                  <div className="p-3 bg-emerald-50/80 border border-emerald-200 rounded-2xl text-xs sm:text-sm font-bold text-emerald-900 flex items-center justify-between">
+                    <span>{formData.mohOffice} MOH Office</span>
+                    <span className="text-xs bg-emerald-200/80 text-emerald-800 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider">🔒 Official</span>
+                  </div>
                 </div>
 
                 {/* Smart PHM Service Area Selection */}

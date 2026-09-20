@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { auth, db } from '../../firebase/config';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import MOHLayout from '../../components/MOHLayout';
-import { DISTRICTS, getMohAreas, findDistrictByMohArea } from '../../data/sriLankaLocations';
+import { findDistrictByMohArea } from '../../data/sriLankaLocations';
 
 const MOHDashboard = () => {
   const [adminProfile, setAdminProfile] = useState(null);
@@ -121,21 +121,13 @@ const MOHDashboard = () => {
       setLoading(false);
     };
 
-    fetchAreaStats();
+    if (mohArea) {
+      fetchAreaStats();
+    }
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, [mohArea]);
 
-  const handleDistrictChange = (e) => {
-    const newDistrict = e.target.value;
-    setDistrict(newDistrict);
-    const mohs = getMohAreas(newDistrict);
-    if (mohs.length > 0) {
-      setMohArea(mohs[0]);
-    }
-  };
-
-  const availableMohAreas = getMohAreas(district);
   const totalMothers = stats.mothersCount || 1;
   const highRiskPercentage = stats.mothersCount > 0 ? Math.round((stats.highRiskCount / totalMothers) * 100) : 0;
 
@@ -190,12 +182,12 @@ const MOHDashboard = () => {
                 <div className="flex items-center gap-4 text-xs text-emerald-200/90 pt-1">
                   <span>📞 {adminProfile.phone}</span>
                   {adminProfile.officePhone && <span>🏢 {adminProfile.officePhone}</span>}
-                  <span>✉️ {adminProfile.email}</span>
+                  <span>✉ {adminProfile.email}</span>
                 </div>
               )}
             </div>
 
-            {/* Right: Live Clock & Jurisdiction Switcher */}
+            {/* Right: Live Clock & Locked Official Jurisdiction Badge */}
             <div className="flex flex-col sm:flex-row lg:flex-col items-start lg:items-end gap-3 bg-white/10 backdrop-blur-md p-5 rounded-2xl border border-white/10 shadow-inner">
               <div className="text-left lg:text-right">
                 <div className="text-2xl font-black tracking-tight font-mono text-emerald-300">
@@ -206,27 +198,13 @@ const MOHDashboard = () => {
                 </div>
               </div>
 
-              {/* Area Switcher Dropdown */}
+              {/* Locked Official Jurisdiction Badge */}
               <div className="flex items-center gap-2 pt-2 border-t border-white/10 w-full sm:w-auto">
-                <select
-                  value={district}
-                  onChange={handleDistrictChange}
-                  className="p-1.5 bg-slate-900/80 text-white border border-white/20 rounded-xl text-xs font-bold focus:ring-2 focus:ring-emerald-400 outline-none"
-                >
-                  {DISTRICTS.map(d => (
-                    <option key={d} value={d} className="bg-slate-900 text-white">{d}</option>
-                  ))}
-                </select>
-
-                <select
-                  value={mohArea}
-                  onChange={(e) => setMohArea(e.target.value)}
-                  className="p-1.5 bg-emerald-950 text-emerald-200 border border-emerald-400/40 rounded-xl text-xs font-bold focus:ring-2 focus:ring-emerald-400 outline-none"
-                >
-                  {availableMohAreas.map(area => (
-                    <option key={area} value={area} className="bg-slate-900 text-white">{area}</option>
-                  ))}
-                </select>
+                <span className="px-3 py-1.5 bg-emerald-950/90 text-emerald-200 border border-emerald-400/30 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm">
+                  <span className="text-sm">🔒</span>
+                  <span>{mohArea} MOH ({district})</span>
+                  <span className="bg-emerald-500/30 text-emerald-300 text-[10px] px-1.5 py-0.5 rounded font-black uppercase ml-1">Official</span>
+                </span>
               </div>
             </div>
           </div>

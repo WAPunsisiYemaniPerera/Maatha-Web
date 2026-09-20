@@ -3,7 +3,7 @@ import { auth, db } from '../../firebase/config';
 import { collection, query, where, getDocs, deleteDoc, doc, getDoc } from 'firebase/firestore';
 import MOHLayout from '../../components/MOHLayout';
 import ModalPortal from '../../components/ModalPortal';
-import { DISTRICTS, getMohAreas, findDistrictByMohArea } from '../../data/sriLankaLocations';
+import { findDistrictByMohArea } from '../../data/sriLankaLocations';
 import { safeRenderText } from '../../utils/securityValidators';
 
 const ManageMidwives = () => {
@@ -81,15 +81,6 @@ const ManageMidwives = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mohArea]);
 
-  const handleDistrictChange = (e) => {
-    const newDistrict = e.target.value;
-    setDistrict(newDistrict);
-    const mohs = getMohAreas(newDistrict);
-    if (mohs.length > 0) {
-      setMohArea(mohs[0]);
-    }
-  };
-
   const confirmDelete = async () => {
     if (showDeleteModal) {
       try {
@@ -104,8 +95,6 @@ const ManageMidwives = () => {
       }
     }
   };
-
-  const availableMohAreas = getMohAreas(district);
 
   const filteredMidwives = midwives.filter(m => {
     if (!searchTerm.trim()) return true;
@@ -229,7 +218,7 @@ const ManageMidwives = () => {
         </div>
       )}
 
-      {/* Header & Area Selectors */}
+      {/* Header & Locked Jurisdiction Badge */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">පවුල් සෞඛ්‍ය නිලධාරීන් කළමනාකරණය</h1>
@@ -238,27 +227,13 @@ const ManageMidwives = () => {
           </div>
         </div>
 
-        {/* District & MOH Area Selectors */}
+        {/* Locked Official Jurisdiction Badge */}
         <div className="flex items-center gap-2">
-          <select
-            value={district}
-            onChange={handleDistrictChange}
-            className="p-2.5 bg-white border border-slate-200 rounded-2xl text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-none shadow-sm"
-          >
-            {DISTRICTS.map(dist => (
-              <option key={dist} value={dist}>{dist}</option>
-            ))}
-          </select>
-
-          <select
-            value={mohArea}
-            onChange={(e) => setMohArea(e.target.value)}
-            className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-none shadow-sm"
-          >
-            {availableMohAreas.map(area => (
-              <option key={area} value={area}>{area}</option>
-            ))}
-          </select>
+          <span className="px-3.5 py-2 bg-emerald-950 text-emerald-200 border border-emerald-400/30 rounded-2xl text-xs font-bold flex items-center gap-1.5 shadow-sm">
+            <span className="text-sm">🔒</span>
+            <span>{mohArea} MOH ({district})</span>
+            <span className="bg-emerald-500/20 text-emerald-300 text-[10px] px-1.5 py-0.5 rounded font-black uppercase ml-1">Official</span>
+          </span>
         </div>
       </div>
 

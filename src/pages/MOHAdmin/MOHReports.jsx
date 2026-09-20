@@ -3,7 +3,7 @@ import { auth, db } from '../../firebase/config';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import MOHLayout from '../../components/MOHLayout';
 import ModalPortal from '../../components/ModalPortal';
-import { DISTRICTS, getMohAreas, findDistrictByMohArea } from '../../data/sriLankaLocations';
+import { findDistrictByMohArea } from '../../data/sriLankaLocations';
 import { formatDisplayDate, safeRenderText, isHighRiskMother, normalizeRiskStatus } from '../../utils/securityValidators';
 import {
   generateMothersPDF,
@@ -266,17 +266,6 @@ const MOHReports = () => {
     showToast("දත්ත සාර්ථකව Excel/CSV ගොනුවක් ලෙස බාගත කරන ලදී!");
   };
 
-  const handleDistrictChange = (e) => {
-    const newDistrict = e.target.value;
-    setDistrict(newDistrict);
-    const mohs = getMohAreas(newDistrict);
-    if (mohs.length > 0) {
-      setMohArea(mohs[0]);
-    }
-  };
-
-  const availableMohAreas = getMohAreas(district);
-
   return (
     <MOHLayout>
       <div className="space-y-8 max-w-7xl mx-auto">
@@ -308,34 +297,18 @@ const MOHReports = () => {
               </p>
             </div>
 
-            {/* Area Switcher & Live Clock */}
-            <div className="flex flex-wrap items-center gap-3 bg-white/10 backdrop-blur-md p-3.5 sm:p-4 rounded-2xl border border-white/10 shrink-0">
-              <div className="flex items-center gap-2">
-                <select
-                  value={district}
-                  onChange={handleDistrictChange}
-                  className="p-2 bg-slate-900/90 text-white border border-white/20 rounded-xl text-xs font-bold focus:ring-2 focus:ring-emerald-400 outline-none"
-                >
-                  {DISTRICTS.map(d => (
-                    <option key={d} value={d} className="bg-slate-900 text-white">{d}</option>
-                  ))}
-                </select>
-
-                <select
-                  value={mohArea}
-                  onChange={(e) => setMohArea(e.target.value)}
-                  className="p-2 bg-emerald-950 text-emerald-200 border border-emerald-400/40 rounded-xl text-xs font-bold focus:ring-2 focus:ring-emerald-400 outline-none"
-                >
-                  {availableMohAreas.map(area => (
-                    <option key={area} value={area} className="bg-slate-900 text-white">{area}</option>
-                  ))}
-                </select>
-              </div>
+            {/* Locked Jurisdiction Badge & Re-Sync */}
+            <div className="flex flex-wrap items-center gap-2 bg-white/10 backdrop-blur-md p-3 sm:p-3.5 rounded-2xl border border-white/10 shrink-0">
+              <span className="px-3.5 py-2 bg-slate-900/90 text-emerald-300 border border-emerald-400/30 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm">
+                <span className="text-sm">🔒</span>
+                <span>{mohArea} MOH ({district})</span>
+                <span className="bg-emerald-500/20 text-emerald-300 text-[10px] px-1.5 py-0.5 rounded font-black uppercase ml-1">Official</span>
+              </span>
 
               <button
                 onClick={fetchMOHData}
                 disabled={loading}
-                className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow transition-all flex items-center gap-1.5 active:scale-95"
+                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow transition-all flex items-center gap-1.5 active:scale-95"
               >
                 <span>{loading ? '...' : '🔄 Re-Sync'}</span>
               </button>
