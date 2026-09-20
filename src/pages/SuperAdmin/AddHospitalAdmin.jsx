@@ -5,7 +5,20 @@ import { doc, setDoc, collection, getDocs, deleteDoc, updateDoc } from 'firebase
 import AdminLayout from '../../components/AdminLayout';
 import ModalPortal from '../../components/ModalPortal';
 import { DISTRICTS } from '../../data/sriLankaLocations';
-import { isValidEmail, isValidNIC, checkEmailUniqueness, checkNICUniqueness, evaluatePasswordStrength, formatAuthError, formatDisplayDate, safeRenderText } from '../../utils/securityValidators';
+import { 
+  isValidEmail, 
+  isValidNIC, 
+  isValidMobileNumber,
+  isValidLandlineNumber,
+  cleanPhoneNumber,
+  getNICDetails,
+  checkEmailUniqueness, 
+  checkNICUniqueness, 
+  evaluatePasswordStrength, 
+  formatAuthError, 
+  formatDisplayDate, 
+  safeRenderText 
+} from '../../utils/securityValidators';
 import PasswordSecurityField from '../../components/PasswordSecurityField';
 
 const HOSPITAL_TYPES = [
@@ -123,6 +136,8 @@ const AddHospitalAdmin = () => {
 
     const cleanNIC = (formData.adminNic || '').trim().toUpperCase();
     const cleanEmail = (formData.email || '').trim().toLowerCase();
+    const cleanAdminMobile = cleanPhoneNumber(formData.adminPhone);
+    const cleanHospitalPhone = cleanPhoneNumber(formData.hospitalPhone);
 
     if (!cleanNIC) {
       showToast("කරුණාකර පරිපාලකගේ ජාතික හැඳුනුම්පත් අංකය (NIC) ඇතුළත් කරන්න", 'error');
@@ -130,7 +145,22 @@ const AddHospitalAdmin = () => {
     }
 
     if (!isValidNIC(cleanNIC)) {
-      showToast("වලංගු ජාතික හැඳුනුම්පත් අංකයක් (NIC) ඇතුළත් කරන්න (උදා: 198512345678 හෝ 851234567V)", 'error');
+      showToast("වලංගු ජාතික හැඳුනුම්පත් අංකයක් (NIC) ඇතුළත් කරන්න:\n• පැරණි NIC: 901234567V (ඉලක්කම් 9ක් සහ V/X)\n• නව NIC: 199012345678 (ඉලක්කම් 12ක්)", 'error');
+      return;
+    }
+
+    if (!cleanAdminMobile) {
+      showToast("කරුණාකර පරිපාලකගේ ජංගම දුරකථන අංකය ඇතුළත් කරන්න", 'error');
+      return;
+    }
+
+    if (!isValidMobileNumber(cleanAdminMobile)) {
+      showToast("වලංගු ශ්‍රී ලාංකික ජංගම දුරකථන අංකයක් (07XXXXXXXX - ඉලක්කම් 10) ඇතුළත් කරන්න (උදා: 0771234567)", 'error');
+      return;
+    }
+
+    if (cleanHospitalPhone && !isValidLandlineNumber(cleanHospitalPhone)) {
+      showToast("රෝහල් දුරකථන අංකය සඳහා වලංගු ස්ථාවර දුරකථන අංකයක් (Landline - 011XXXXXXX / 081XXXXXXX) ඇතුළත් කරන්න (උදා: 0112691111)", 'error');
       return;
     }
 
@@ -167,7 +197,7 @@ const AddHospitalAdmin = () => {
           district: formData.district,
           city: (formData.city || '').trim(),
           hospitalAddress: (formData.hospitalAddress || '').trim(),
-          hospitalPhone: (formData.hospitalPhone || '').trim(),
+          hospitalPhone: cleanHospitalPhone,
           maternityWardCapacity: (formData.maternityWardCapacity || '').trim(),
           hasNicu: formData.hasNicu,
           hasBloodBank: formData.hasBloodBank,
@@ -177,7 +207,8 @@ const AddHospitalAdmin = () => {
           slmcNumber: (formData.slmcNumber || '').trim(),
           designation: formData.designation,
           gender: formData.gender,
-          adminPhone: (formData.adminPhone || '').trim(),
+          adminPhone: cleanAdminMobile,
+          phone: cleanAdminMobile,
           email: cleanEmail,
           status: formData.status,
           updatedAt: new Date()
@@ -237,7 +268,7 @@ const AddHospitalAdmin = () => {
           district: formData.district,
           city: (formData.city || '').trim(),
           hospitalAddress: (formData.hospitalAddress || '').trim(),
-          hospitalPhone: (formData.hospitalPhone || '').trim(),
+          hospitalPhone: cleanHospitalPhone,
           maternityWardCapacity: (formData.maternityWardCapacity || '').trim(),
           hasNicu: formData.hasNicu,
           hasBloodBank: formData.hasBloodBank,
@@ -247,13 +278,14 @@ const AddHospitalAdmin = () => {
           slmcNumber: (formData.slmcNumber || '').trim(),
           designation: formData.designation,
           gender: formData.gender,
-          adminPhone: (formData.adminPhone || '').trim(),
+          adminPhone: cleanAdminMobile,
+          phone: cleanAdminMobile,
           email: cleanEmail,
           status: formData.status,
           createdAt: new Date()
         });
 
-        showToast("රෝහල සහ රෝහල් පරිපාලක සාර්ථකව පද්ධතියට ලියාපදිංචි කරන ලදී! (Hospital Registered)");
+        showToast("රෝහල් පාලක/වෛද්‍ය අධිකාරී සාර්ථකව ලියාපදිංචි කරන ලදී! (Hospital Admin Registered)");
         setFormData(initialFormState);
         fetchHospitalAdmins();
       }
@@ -658,9 +690,18 @@ const AddHospitalAdmin = () => {
 
                 {/* Hospital Phone */}
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">
-                    රෝහල් දුරකථන අංකය
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-sm font-bold text-slate-700">
+                      රෝහල් දුරකථන අංකය (Landline)
+                    </label>
+                    {formData.hospitalPhone && (
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                        isValidLandlineNumber(formData.hospitalPhone) ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                      }`}>
+                        {isValidLandlineNumber(formData.hospitalPhone) ? '✅ වලංගු ස්ථාවර අංකයකි' : '⚠️ ආකෘතිය: 011XXXXXXX'}
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="tel"
                     name="hospitalPhone"
@@ -669,6 +710,7 @@ const AddHospitalAdmin = () => {
                     placeholder="0112691111"
                     className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base font-semibold focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all"
                   />
+                  <p className="text-[11px] text-slate-400 mt-1">රෝහලේ ස්ථාවර දුරකථන අංකය (උදා: 0112691111 / 0812222222)</p>
                 </div>
 
                 {/* Hospital Address */}
@@ -787,9 +829,18 @@ const AddHospitalAdmin = () => {
 
                 {/* Admin NIC */}
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">
-                    ජාතික හැඳුනුම්පත (NIC) <span className="text-red-500">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-sm font-bold text-slate-700">
+                      ජාතික හැඳුනුම්පත (NIC) <span className="text-red-500">*</span>
+                    </label>
+                    {formData.adminNic && (
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                        isValidNIC(formData.adminNic) ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                      }`}>
+                        {getNICDetails(formData.adminNic).label || 'ආකෘතිය: 901234567V / 199012345678'}
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="text"
                     name="adminNic"
@@ -799,6 +850,7 @@ const AddHospitalAdmin = () => {
                     required
                     className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base font-mono font-bold uppercase focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all"
                   />
+                  <p className="text-[11px] text-slate-400 mt-1">පැරණි NIC (ඉලක්කම් 9 + V/X) හෝ නව NIC (ඉලක්කම් 12)</p>
                 </div>
 
                 {/* Designation */}
@@ -835,9 +887,18 @@ const AddHospitalAdmin = () => {
 
                 {/* Admin Phone */}
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">
-                    ජංගම දුරකථන අංකය (Mobile) <span className="text-red-500">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-sm font-bold text-slate-700">
+                      ජංගම දුරකථන අංකය (Mobile) <span className="text-red-500">*</span>
+                    </label>
+                    {formData.adminPhone && (
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                        isValidMobileNumber(formData.adminPhone) ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                      }`}>
+                        {isValidMobileNumber(formData.adminPhone) ? '✅ වලංගු ජංගම අංකයකි' : '⚠️ ආකෘතිය: 07XXXXXXXX'}
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="tel"
                     name="adminPhone"
@@ -847,6 +908,7 @@ const AddHospitalAdmin = () => {
                     required
                     className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base font-semibold focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all"
                   />
+                  <p className="text-[11px] text-slate-400 mt-1">ශ්‍රී ලාංකික ජංගම දුරකථන අංකය (ඉලක්කම් 10, 07න් ආරම්භ විය යුතුය)</p>
                 </div>
               </div>
             </div>

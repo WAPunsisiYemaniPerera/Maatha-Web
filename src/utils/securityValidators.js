@@ -11,16 +11,95 @@ export const isValidEmail = (email) => {
 
 /**
  * Validates Sri Lankan National Identity Card (NIC) format:
- * - Old format: 9 digits followed by 'V' or 'X' (e.g. 851234567V)
- * - New format: 12 digits (e.g. 198512345678)
+ * - Old format: 9 numerical digits followed by 'V' or 'X' / 'v' or 'x' (e.g. 901234567V)
+ * - New format: 12 numerical digits, generally starting with birth year (e.g. 199012345678)
  */
 export const isValidNIC = (nic) => {
   if (!nic) return false;
   const cleanNIC = String(nic).trim().toUpperCase();
   const oldNicRegex = /^[0-9]{9}[VX]$/;
-  const newNicRegex = /^[0-9]{12}$/;
+  const newNicRegex = /^(?:19|20)?[0-9]{12}$/;
   return oldNicRegex.test(cleanNIC) || newNicRegex.test(cleanNIC);
 };
+
+/**
+ * Parses and returns metadata about a Sri Lankan NIC (Old vs New format, birth year).
+ */
+export const getNICDetails = (nic) => {
+  if (!nic) return { isValid: false, message: 'හැඳුනුම්පත් අංකය ඇතුළත් කර නොමැත (NIC is required)' };
+  const clean = String(nic).trim().toUpperCase();
+  
+  if (/^[0-9]{9}[VX]$/.test(clean)) {
+    return {
+      isValid: true,
+      type: 'Old NIC',
+      label: 'පැරණි හැඳුනුම්පත (Old NIC)',
+      format: '9 Digits + V/X',
+      cleanNIC: clean,
+      birthYear: `19${clean.substring(0, 2)}`
+    };
+  }
+
+  if (/^[0-9]{12}$/.test(clean)) {
+    return {
+      isValid: true,
+      type: 'New NIC',
+      label: 'නව හැඳුනුම්පත (New NIC)',
+      format: '12 Digits',
+      cleanNIC: clean,
+      birthYear: clean.substring(0, 4)
+    };
+  }
+
+  return {
+    isValid: false,
+    message: 'වලංගු ශ්‍රී ලාංකික හැඳුනුම්පත් අංකයක් නොවේ. (පැරණි NIC: 901234567V / නව NIC: 199012345678)'
+  };
+};
+
+/**
+ * Cleans phone number string (removes spaces, hyphens, and brackets)
+ */
+export const cleanPhoneNumber = (phone) => {
+  if (!phone) return '';
+  return String(phone).trim().replace(/[\s\-()]/g, '');
+};
+
+/**
+ * Validates Sri Lankan Mobile phone numbers:
+ * - 10 numerical digits starting with '07'
+ * - Format: 07XXXXXXXX (e.g. 0712345678, 0771234567, 0701234567, 074..., 075..., 076..., 078..., 072...)
+ * - Regex: ^07\d{8}$
+ */
+export const isValidMobileNumber = (phone) => {
+  if (!phone) return false;
+  const clean = cleanPhoneNumber(phone);
+  return /^07\d{8}$/.test(clean);
+};
+
+/**
+ * Validates Sri Lankan Fixed-Line / Landline phone numbers:
+ * - TRCSL standard geographical area codes (011 - 091) + 7 digits subscriber number
+ * - Total 10 numerical digits starting with geographical area code:
+ *   011 (Colombo), 021 (Jaffna), 023 (Mannar), 024 (Vavuniya), 025 (Anuradhapura), 026 (Trincomalee), 027 (Polonnaruwa),
+ *   031 (Negombo), 032 (Chilaw), 033 (Gampaha), 034 (Kalutara), 035 (Kegalle), 036 (Avissawella), 037 (Kurunegala),
+ *   038 (Panadura), 041 (Matara), 045 (Ratnapura), 047 (Hambantota), 051 (Hatton), 052 (Nuwara Eliya), 054 (Nawalapitiya),
+ *   055 (Badulla), 057 (Bandarawela), 063 (Ampara), 065 (Batticaloa), 066 (Matale), 067 (Kalmunai), 081 (Kandy), 091 (Galle)
+ * - Regex: ^0(?:11|21|23|24|25|26|27|31|32|33|34|35|36|37|38|41|45|47|51|52|54|55|57|63|65|66|67|81|91)\d{7}$
+ */
+export const isValidLandlineNumber = (phone) => {
+  if (!phone) return false;
+  const clean = cleanPhoneNumber(phone);
+  return /^0(?:11|21|23|24|25|26|27|31|32|33|34|35|36|37|38|41|45|47|51|52|54|55|57|63|65|66|67|81|91)\d{7}$/.test(clean);
+};
+
+/**
+ * Validates any valid Sri Lankan Phone Number (either 10-digit Mobile '07XXXXXXXX' OR 10-digit Landline '0XXXXXXXXX')
+ */
+export const isValidSLPhone = (phone) => {
+  return isValidMobileNumber(phone) || isValidLandlineNumber(phone);
+};
+
 
 /**
  * Checks if an email is already in use across Firestore `users`, `moh_admins`, `hospital_admins`, or `midwives`.

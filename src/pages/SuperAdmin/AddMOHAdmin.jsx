@@ -6,7 +6,20 @@ import AdminLayout from '../../components/AdminLayout';
 import ModalPortal from '../../components/ModalPortal';
 import { DISTRICTS, getMohAreas, findDistrictByMohArea } from '../../data/sriLankaLocations';
 import PasswordSecurityField from '../../components/PasswordSecurityField';
-import { checkEmailUniqueness, checkNICUniqueness, evaluatePasswordStrength, formatAuthError, formatDisplayDate, isValidEmail, isValidNIC, safeRenderText } from '../../utils/securityValidators';
+import { 
+  checkEmailUniqueness, 
+  checkNICUniqueness, 
+  evaluatePasswordStrength, 
+  formatAuthError, 
+  formatDisplayDate, 
+  isValidEmail, 
+  isValidNIC, 
+  isValidMobileNumber,
+  isValidLandlineNumber,
+  cleanPhoneNumber,
+  getNICDetails,
+  safeRenderText 
+} from '../../utils/securityValidators';
 
 const DESIGNATIONS = [
   'Medical Officer of Health (MOH)',
@@ -106,6 +119,8 @@ const AddMOHAdmin = () => {
 
     const cleanNIC = (formData.nic || '').trim().toUpperCase();
     const cleanEmail = (formData.email || '').trim().toLowerCase();
+    const cleanPhone = cleanPhoneNumber(formData.phone);
+    const cleanOfficePhone = cleanPhoneNumber(formData.officePhone);
 
     if (!cleanNIC) {
       showToast("කරුණාකර ජාතික හැඳුනුම්පත් අංකය (NIC) ඇතුළත් කරන්න", 'error');
@@ -113,7 +128,22 @@ const AddMOHAdmin = () => {
     }
 
     if (!isValidNIC(cleanNIC)) {
-      showToast("වලංගු ජාතික හැඳුනුම්පත් අංකයක් (NIC) ඇතුළත් කරන්න (උදා: 198512345678 හෝ 851234567V)", 'error');
+      showToast("වලංගු ජාතික හැඳුනුම්පත් අංකයක් (NIC) ඇතුළත් කරන්න:\n• පැරණි NIC: 901234567V (ඉලක්කම් 9ක් සහ V/X)\n• නව NIC: 199012345678 (ඉලක්කම් 12ක්)", 'error');
+      return;
+    }
+
+    if (!cleanPhone) {
+      showToast("කරුණාකර ජංගම දුරකථන අංකය ඇතුළත් කරන්න", 'error');
+      return;
+    }
+
+    if (!isValidMobileNumber(cleanPhone)) {
+      showToast("වලංගු ශ්‍රී ලාංකික ජංගම දුරකථන අංකයක් (07XXXXXXXX - ඉලක්කම් 10) ඇතුළත් කරන්න (උදා: 0771234567)", 'error');
+      return;
+    }
+
+    if (cleanOfficePhone && !isValidLandlineNumber(cleanOfficePhone)) {
+      showToast("කාර්යාල දුරකථන අංකය සඳහා වලංගු ස්ථාවර දුරකථන අංකයක් (Landline - 011XXXXXXX / 081XXXXXXX) ඇතුළත් කරන්න (උදා: 0112345678)", 'error');
       return;
     }
 
@@ -149,8 +179,8 @@ const AddMOHAdmin = () => {
           slmcNumber: (formData.slmcNumber || '').trim(),
           designation: formData.designation,
           gender: formData.gender,
-          phone: (formData.phone || '').trim(),
-          officePhone: (formData.officePhone || '').trim(),
+          phone: cleanPhone,
+          officePhone: cleanOfficePhone,
           email: cleanEmail,
           officeAddress: (formData.officeAddress || '').trim(),
           district: formData.district,
@@ -213,8 +243,8 @@ const AddMOHAdmin = () => {
           slmcNumber: (formData.slmcNumber || '').trim(),
           designation: formData.designation,
           gender: formData.gender,
-          phone: (formData.phone || '').trim(),
-          officePhone: (formData.officePhone || '').trim(),
+          phone: cleanPhone,
+          officePhone: cleanOfficePhone,
           email: cleanEmail,
           officeAddress: (formData.officeAddress || '').trim(),
           district: formData.district,
@@ -550,9 +580,18 @@ const AddMOHAdmin = () => {
 
                 {/* NIC */}
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">
-                    ජාතික හැඳුනුම්පත (NIC) <span className="text-red-500">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-sm font-bold text-slate-700">
+                      ජාතික හැඳුනුම්පත (NIC) <span className="text-red-500">*</span>
+                    </label>
+                    {formData.nic && (
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                        isValidNIC(formData.nic) ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                      }`}>
+                        {getNICDetails(formData.nic).label || 'ආකෘතිය: 901234567V / 199012345678'}
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="text"
                     name="nic"
@@ -562,6 +601,7 @@ const AddMOHAdmin = () => {
                     required
                     className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base font-mono font-bold uppercase focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all"
                   />
+                  <p className="text-[11px] text-slate-400 mt-1">පැරණි NIC (ඉලක්කම් 9 + V/X) හෝ නව NIC (ඉලක්කම් 12)</p>
                 </div>
 
                 {/* SLMC Reg Number */}
@@ -693,9 +733,18 @@ const AddMOHAdmin = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {/* Personal Phone */}
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">
-                    ජංගම දුරකථන අංකය (Mobile) <span className="text-red-500">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-sm font-bold text-slate-700">
+                      ජංගම දුරකථන අංකය (Mobile) <span className="text-red-500">*</span>
+                    </label>
+                    {formData.phone && (
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                        isValidMobileNumber(formData.phone) ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                      }`}>
+                        {isValidMobileNumber(formData.phone) ? '✅ වලංගු ජංගම අංකයකි' : '⚠️ ආකෘතිය: 07XXXXXXXX'}
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="tel"
                     name="phone"
@@ -705,13 +754,23 @@ const AddMOHAdmin = () => {
                     required
                     className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base font-semibold focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all"
                   />
+                  <p className="text-[11px] text-slate-400 mt-1">ශ්‍රී ලාංකික ජංගම දුරකථන අංකය (ඉලක්කම් 10, 07න් ආරම්භ විය යුතුය)</p>
                 </div>
 
                 {/* Office Phone */}
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">
-                    MOH කාර්යාල දුරකථන අංකය
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-sm font-bold text-slate-700">
+                      MOH කාර්යාල දුරකථන අංකය (Landline)
+                    </label>
+                    {formData.officePhone && (
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                        isValidLandlineNumber(formData.officePhone) ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                      }`}>
+                        {isValidLandlineNumber(formData.officePhone) ? '✅ වලංගු ස්ථාවර අංකයකි' : '⚠️ ආකෘතිය: 011XXXXXXX'}
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="tel"
                     name="officePhone"
@@ -720,6 +779,7 @@ const AddMOHAdmin = () => {
                     placeholder="0112345678"
                     className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base font-semibold focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all"
                   />
+                  <p className="text-[11px] text-slate-400 mt-1">ස්ථාවර කාර්යාල දුරකථන අංකය (උදා: 0112345678 / 0812345678)</p>
                 </div>
 
                 {/* Appointment Date */}

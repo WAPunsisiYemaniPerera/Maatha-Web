@@ -15,14 +15,16 @@ const SearchMother = () => {
     setError('');
     setMotherData(null);
 
+    const cleanNIC = (nic || '').trim().toUpperCase();
+
     try {
-      const q = query(collection(db, "mothers"), where("nic", "==", nic));
+      const q = query(collection(db, "mothers"), where("nic", "==", cleanNIC));
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
         setMotherData(querySnapshot.docs[0].data());
       } else {
-        setError("මෙම හැඳුනුම්පත් අංකයට අදාළ දත්ත පද්ධතියේ හමු නොවීය. (No records found)");
+        setError(`මෙම හැඳුනුම්පත් අංකයට (${cleanNIC}) අදාළ දත්ත පද්ධතියේ හමු නොවීය. (No records found)`);
       }
     } catch (err) {
       setError("දත්ත සෙවීමේදී දෝෂයක් සිදු විය. නැවත උත්සාහ කරන්න.");

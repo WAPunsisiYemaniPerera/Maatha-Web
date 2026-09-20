@@ -6,7 +6,17 @@ import { doc, setDoc, collection, getDocs, getDoc, deleteDoc, updateDoc, query, 
 import MOHLayout from '../../components/MOHLayout';
 import ModalPortal from '../../components/ModalPortal';
 import { findDistrictByMohArea } from '../../data/sriLankaLocations';
-import { isValidEmail, isValidNIC, checkEmailUniqueness, checkNICUniqueness, evaluatePasswordStrength, formatAuthError } from '../../utils/securityValidators';
+import { 
+  isValidEmail, 
+  isValidNIC, 
+  isValidMobileNumber,
+  cleanPhoneNumber,
+  getNICDetails,
+  checkEmailUniqueness, 
+  checkNICUniqueness, 
+  evaluatePasswordStrength, 
+  formatAuthError 
+} from '../../utils/securityValidators';
 import PasswordSecurityField from '../../components/PasswordSecurityField';
 
 const AddMidwife = () => {
@@ -141,6 +151,7 @@ const AddMidwife = () => {
 
     const cleanNIC = (formData.nic || '').trim().toUpperCase();
     const cleanEmail = (formData.email || '').trim().toLowerCase();
+    const cleanPhone = cleanPhoneNumber(formData.phone);
     const cleanArea = (formData.serviceArea || '').trim();
 
     if (!cleanNIC) {
@@ -149,7 +160,17 @@ const AddMidwife = () => {
     }
 
     if (!isValidNIC(cleanNIC)) {
-      showToast("වලංගු ජාතික හැඳුනුම්පත් අංකයක් (NIC) ඇතුළත් කරන්න (උදා: 198512345678 හෝ 851234567V)", 'error');
+      showToast("වලංගු ජාතික හැඳුනුම්පත් අංකයක් (NIC) ඇතුළත් කරන්න:\n• පැරණි NIC: 901234567V (ඉලක්කම් 9ක් සහ V/X)\n• නව NIC: 199012345678 (ඉලක්කම් 12ක්)", 'error');
+      return;
+    }
+
+    if (!cleanPhone) {
+      showToast("කරුණාකර නිලධාරිනියගේ ජංගම දුරකථන අංකය ඇතුළත් කරන්න", 'error');
+      return;
+    }
+
+    if (!isValidMobileNumber(cleanPhone)) {
+      showToast("වලංගු ශ්‍රී ලාංකික ජංගම දුරකථන අංකයක් (07XXXXXXXX - ඉලක්කම් 10) ඇතුළත් කරන්න (උදා: 0771234567)", 'error');
       return;
     }
 
@@ -185,7 +206,7 @@ const AddMidwife = () => {
         await updateDoc(doc(db, "midwives", editingId), {
           fullName: formData.fullName.trim(),
           nic: cleanNIC,
-          phone: formData.phone.trim(),
+          phone: cleanPhone,
           district: formData.district,
           mohArea: formData.mohOffice,
           serviceArea: cleanArea,
@@ -222,7 +243,7 @@ const AddMidwife = () => {
         await setDoc(doc(db, "midwives", uid), {
           fullName: formData.fullName.trim(),
           nic: cleanNIC,
-          phone: formData.phone.trim(),
+          phone: cleanPhone,
           email: cleanEmail,
           employeeId: formData.employeeId.trim(),
           district: formData.district,
@@ -359,8 +380,60 @@ const AddMidwife = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <InputField label="සම්පූර්ණ නම" sub="Full Name" name="fullName" value={formData.fullName} onChange={handleChange} placeholder="උදා: ඩබ්. එම්. සුනේත්‍රා පෙරේරා මහත්මිය" required />
-                <InputField label="ජාතික හැඳුනුම්පත් අංකය" sub="NIC Number" name="nic" value={formData.nic} onChange={handleChange} placeholder="උදා: 198654321098 / 865432109V" required disabled={!!editingId} />
-                <InputField label="දුරකථන අංකය" sub="Phone Number" name="phone" value={formData.phone} onChange={handleChange} placeholder="උදා: 0771234567" required />
+                
+                {/* NIC with Real-Time Badge */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-black text-slate-700 uppercase tracking-wider">
+                      ජාතික හැඳුනුම්පත් අංකය <span className="text-[10px] text-slate-400 font-normal ml-1">(NIC Number)</span> <span className="text-red-500">*</span>
+                    </label>
+                    {formData.nic && (
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                        isValidNIC(formData.nic) ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                      }`}>
+                        {getNICDetails(formData.nic).label || 'ආකෘතිය: 901234567V / 199012345678'}
+                      </span>
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    name="nic"
+                    value={formData.nic}
+                    onChange={handleChange}
+                    placeholder="උදා: 198654321098 හෝ 865432109V"
+                    required
+                    disabled={!!editingId}
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all text-xs sm:text-sm font-mono font-bold text-slate-800 uppercase disabled:bg-slate-100 disabled:text-slate-400"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">පැරණි NIC (ඉලක්කම් 9 + V/X) හෝ නව NIC (ඉලක්කම් 12)</p>
+                </div>
+
+                {/* Mobile Phone with Real-Time Badge */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-black text-slate-700 uppercase tracking-wider">
+                      ජංගම දුරකථන අංකය <span className="text-[10px] text-slate-400 font-normal ml-1">(Mobile Phone)</span> <span className="text-red-500">*</span>
+                    </label>
+                    {formData.phone && (
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                        isValidMobileNumber(formData.phone) ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                      }`}>
+                        {isValidMobileNumber(formData.phone) ? '✅ වලංගු ජංගම අංකයකි' : '⚠️ ආකෘතිය: 07XXXXXXXX'}
+                      </span>
+                    )}
+                  </div>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="උදා: 0771234567"
+                    required
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all text-xs sm:text-sm font-semibold text-slate-800"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">ශ්‍රී ලාංකික ජංගම දුරකථන අංකය (ඉලක්කම් 10, 07න් ආරම්භ විය යුතුය)</p>
+                </div>
+
                 <InputField label="සේවක / නිල හැඳුනුම් අංකය" sub="PHM Employee ID" name="employeeId" value={formData.employeeId} onChange={handleChange} placeholder="උදා: PHM-HOM-042" required />
               </div>
             </div>
