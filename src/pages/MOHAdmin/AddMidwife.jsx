@@ -225,8 +225,14 @@ const AddMidwife = () => {
         showToast("නිලධාරිනියගේ විස්තර සාර්ථකව යාවත්කාලීන කරන ලදී! (Details Updated)");
       } else {
         // Strong Password Validation
-        const strength = evaluatePasswordStrength(formData.password);
-        if (strength.score < 3 || !strength.criteria.hasMinLength) {
+        if (!formData.password) {
+          showToast("කරුණාකර පිවිසුම් මුරපදයක් (Password) ඇතුළත් කරන්න", 'error');
+          setLoading(false);
+          return;
+        }
+
+        const pwdEval = evaluatePasswordStrength(formData.password);
+        if (!pwdEval.isValid) {
           showToast("මුරපදය ප්‍රමාණවත් තරම් ශක්තිමත් නැත. අවම වශයෙන් අකුරු 8ක්, ලොකු/කුඩා අකුරු, අංක සහ විශේෂ ලක්ෂණ ඇතුළත් කරන්න.", 'error');
           setLoading(false);
           return;

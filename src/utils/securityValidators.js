@@ -225,6 +225,13 @@ export const evaluatePasswordStrength = (password) => {
         uppercase: false,
         number: false,
         special: false
+      },
+      criteria: {
+        hasMinLength: false,
+        hasLowercase: false,
+        hasUppercase: false,
+        hasNumber: false,
+        hasSpecial: false
       }
     };
   }
@@ -235,6 +242,14 @@ export const evaluatePasswordStrength = (password) => {
     uppercase: /[A-Z]/.test(password),
     number: /[0-9]/.test(password),
     special: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(password)
+  };
+
+  const criteria = {
+    hasMinLength: checks.length,
+    hasLowercase: checks.lowercase,
+    hasUppercase: checks.uppercase,
+    hasNumber: checks.number,
+    hasSpecial: checks.special
   };
 
   const passedCount = Object.values(checks).filter(Boolean).length;
@@ -276,7 +291,8 @@ export const evaluatePasswordStrength = (password) => {
     progressColor,
     percentage,
     isValid,
-    checks
+    checks,
+    criteria
   };
 };
 
