@@ -52,15 +52,16 @@ const MOHDashboard = () => {
     const fetchAreaStats = async () => {
       setLoading(true);
       try {
-        // 1. Fetch Midwives
-        const midwifeQuery = query(collection(db, "midwives"), where("mohArea", "==", mohArea));
-        const midwifeSnap = await getDocs(midwifeQuery);
-        const midwives = midwifeSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        // Parallel batch fetch
+        const [midwifeSnap, motherSnap, phmAreaSnap] = await Promise.all([
+          getDocs(query(collection(db, "midwives"), where("mohArea", "==", mohArea))),
+          getDocs(query(collection(db, "mothers"), where("mohArea", "==", mohArea))),
+          getDocs(query(collection(db, "phm_areas"), where("mohArea", "==", mohArea)))
+        ]);
 
-        // 2. Fetch Mothers
-        const motherQuery = query(collection(db, "mothers"), where("mohArea", "==", mohArea));
-        const motherSnap = await getDocs(motherQuery);
+        const midwives = midwifeSnap.docs.map(d => ({ id: d.id, ...d.data() }));
         const mothers = motherSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const definedPhmAreas = phmAreaSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
         // High Risk Mothers
         const highRisk = mothers.filter(m => m.riskStatus === 'High-Risk');
@@ -99,14 +100,16 @@ const MOHDashboard = () => {
           };
         });
 
-        const uniqueAreas = new Set(midwives.map(m => m.serviceArea).filter(Boolean)).size;
+        const activeAreasCount = new Set(midwives.map(m => m.serviceArea).filter(Boolean)).size;
+        const totalDefinedAreasCount = definedPhmAreas.length;
 
         setStats({
           midwivesCount: midwives.length,
           mothersCount: mothers.length,
           highRiskCount: highRisk.length,
           upcomingDeliveries: upcoming,
-          uniquePhmAreas: uniqueAreas,
+          uniquePhmAreas: totalDefinedAreasCount > 0 ? totalDefinedAreasCount : activeAreasCount,
+          activePhmAreas: activeAreasCount,
           midwivesList: midwives.slice(0, 5),
           highRiskMothers: highRisk.slice(0, 5),
           mothersByMidwife: midwifeWorkload.slice(0, 6),
@@ -230,56 +233,69 @@ const MOHDashboard = () => {
         </div>
 
         {/* Quick Action Buttons */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <Link
             to="/moh-admin/add-midwife"
-            className="group bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:border-emerald-500 hover:shadow-md transition-all flex items-center gap-4"
+            className="group bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:border-emerald-500 hover:shadow-md transition-all flex items-center gap-3.5"
           >
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 group-hover:bg-emerald-600 group-hover:text-white text-emerald-600 flex items-center justify-center text-xl transition-all shadow-sm">
+            <div className="w-11 h-11 rounded-2xl bg-emerald-50 group-hover:bg-emerald-600 group-hover:text-white text-emerald-600 flex items-center justify-center text-xl transition-all shadow-sm shrink-0">
               👩‍⚕️
             </div>
             <div>
               <div className="text-sm font-bold text-slate-800 group-hover:text-emerald-700">නිලධාරිනියක් එක් කරන්න</div>
-              <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Register Field Midwife (PHM)</div>
+              <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Register Field PHM</div>
+            </div>
+          </Link>
+
+          <Link
+            to="/moh-admin/phm-areas"
+            className="group bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:border-teal-500 hover:shadow-md transition-all flex items-center gap-3.5"
+          >
+            <div className="w-11 h-11 rounded-2xl bg-teal-50 group-hover:bg-teal-600 group-hover:text-white text-teal-600 flex items-center justify-center text-xl transition-all shadow-sm shrink-0">
+              📍
+            </div>
+            <div>
+              <div className="text-sm font-bold text-slate-800 group-hover:text-teal-700">PHM කොට්ඨාස</div>
+              <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Manage PHM Divisions</div>
             </div>
           </Link>
 
           <Link
             to="/moh-admin/manage-midwives"
-            className="group bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:border-teal-500 hover:shadow-md transition-all flex items-center gap-4"
+            className="group bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:border-emerald-500 hover:shadow-md transition-all flex items-center gap-3.5"
           >
-            <div className="w-12 h-12 rounded-2xl bg-teal-50 group-hover:bg-teal-600 group-hover:text-white text-teal-600 flex items-center justify-center text-xl transition-all shadow-sm">
+            <div className="w-11 h-11 rounded-2xl bg-emerald-50 group-hover:bg-emerald-600 group-hover:text-white text-emerald-600 flex items-center justify-center text-xl transition-all shadow-sm shrink-0">
               📋
             </div>
             <div>
-              <div className="text-sm font-bold text-slate-800 group-hover:text-teal-700">නිලධාරීන් නාමාවලිය</div>
-              <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Midwife Roster & Coverage</div>
+              <div className="text-sm font-bold text-slate-800 group-hover:text-emerald-700">නිලධාරීන් නාමාවලිය</div>
+              <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Midwives Directory</div>
             </div>
           </Link>
 
           <Link
             to="/moh-admin/area-mothers"
-            className="group bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:border-cyan-500 hover:shadow-md transition-all flex items-center gap-4"
+            className="group bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:border-cyan-500 hover:shadow-md transition-all flex items-center gap-3.5"
           >
-            <div className="w-12 h-12 rounded-2xl bg-cyan-50 group-hover:bg-cyan-600 group-hover:text-white text-cyan-600 flex items-center justify-center text-xl transition-all shadow-sm">
+            <div className="w-11 h-11 rounded-2xl bg-cyan-50 group-hover:bg-cyan-600 group-hover:text-white text-cyan-600 flex items-center justify-center text-xl transition-all shadow-sm shrink-0">
               🤰
             </div>
             <div>
-              <div className="text-sm font-bold text-slate-800 group-hover:text-cyan-700">ප්‍රදේශයේ මව්වරුන්ගේ දත්ත</div>
-              <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Maternal Healthcare Records</div>
+              <div className="text-sm font-bold text-slate-800 group-hover:text-cyan-700">ප්‍රදේශයේ මව්වරුන්</div>
+              <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Maternal Registry</div>
             </div>
           </Link>
 
           <Link
             to="/moh-admin/reports"
-            className="group bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:border-purple-500 hover:shadow-md transition-all flex items-center gap-4"
+            className="group bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:border-purple-500 hover:shadow-md transition-all flex items-center gap-3.5"
           >
-            <div className="w-12 h-12 rounded-2xl bg-purple-50 group-hover:bg-purple-600 group-hover:text-white text-purple-600 flex items-center justify-center text-xl transition-all shadow-sm">
+            <div className="w-11 h-11 rounded-2xl bg-purple-50 group-hover:bg-purple-600 group-hover:text-white text-purple-600 flex items-center justify-center text-xl transition-all shadow-sm shrink-0">
               📄
             </div>
             <div>
               <div className="text-sm font-bold text-slate-800 group-hover:text-purple-700">නිල වාර්තා සහ PDF</div>
-              <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">MOH Reports & Documents</div>
+              <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">MOH Documents</div>
             </div>
           </Link>
         </div>

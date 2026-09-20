@@ -16,6 +16,7 @@ import AddMidwife from './pages/MOHAdmin/AddMidwife';
 import ManageMidwivesMOH from './pages/MOHAdmin/ManageMidwives';
 import AreaMothers from './pages/MOHAdmin/AreaMothers';
 import MOHReports from './pages/MOHAdmin/MOHReports';
+import PHMAreas from './pages/MOHAdmin/PHMAreas';
 
 // Hospital Admin Pages
 import HospitalDashboard from './pages/HospitalAdmin/HospitalDashboard';
@@ -43,6 +44,7 @@ function App() {
         <Route path="/moh-admin/add-midwife" element={<AddMidwife />} />
         <Route path="/moh-admin/manage-midwives" element={<ManageMidwivesMOH />} />
         <Route path="/moh-admin/area-mothers" element={<AreaMothers />} />
+        <Route path="/moh-admin/phm-areas" element={<PHMAreas />} />
         <Route path="/moh-admin/reports" element={<MOHReports />} />
 
         {/* Hospital Admin Routes */}
