@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { db } from '../../firebase/config';
-import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { db, auth } from '../../firebase/config';
+import { collection, query, where, getDocs, updateDoc, doc, getDoc } from 'firebase/firestore';
 import HospitalLayout from '../../components/HospitalLayout';
 import ModalPortal from '../../components/ModalPortal';
 import { Link } from 'react-router-dom';
+import { isHighRiskMother } from '../../utils/securityValidators';
 
 const Admissions = () => {
   const [admittedMothers, setAdmittedMothers] = useState([]);
@@ -11,13 +12,32 @@ const Admissions = () => {
   const [message, setMessage] = useState('');
   const [transferId, setTransferId] = useState(null);
   const [newHospital, setNewHospital] = useState('');
-  
-  const hospitalName = "General Hospital Colombo"; 
+  const [hospitalName, setHospitalName] = useState('General Hospital Colombo');
   
   const fetchAdmissions = async () => {
     setLoading(true);
+    let currentHosp = "General Hospital Colombo";
+    const user = auth.currentUser;
+    
+    if (user) {
+      try {
+        const adminDoc = await getDoc(doc(db, "hospital_admins", user.uid));
+        if (adminDoc.exists() && adminDoc.data().hospitalName) {
+          currentHosp = adminDoc.data().hospitalName;
+        } else {
+          const userDoc = await getDoc(doc(db, "users", user.uid));
+          if (userDoc.exists() && userDoc.data().hospitalName) {
+            currentHosp = userDoc.data().hospitalName;
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching hospital name:", err);
+      }
+    }
+    setHospitalName(currentHosp);
+
     try {
-      const q = query(collection(db, "mothers"), where("hospitalName", "==", hospitalName));
+      const q = query(collection(db, "mothers"), where("hospitalName", "==", currentHosp));
       const querySnapshot = await getDocs(q);
       const list = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setAdmittedMothers(list);
@@ -135,9 +155,9 @@ const Admissions = () => {
                   </td>
                   <td className="p-5">
                     <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
-                      mother.riskStatus === 'High-Risk' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
+                      isHighRiskMother(mother) ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
                     }`}>
-                      {mother.riskStatus}
+                      {isHighRiskMother(mother) ? 'High-Risk' : 'Normal'}
                     </span>
                   </td>
                   <td className="p-5">

@@ -1,19 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../../firebase/config';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db, auth } from '../../firebase/config';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import HospitalLayout from '../../components/HospitalLayout';
+import { isHighRiskMother } from '../../utils/securityValidators';
 
 const Reports = () => {
   const [reportData, setReportData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const hospitalName = "General Hospital Colombo"; 
+  const [hospitalName, setHospitalName] = useState('General Hospital Colombo'); 
 
   useEffect(() => {
     const fetchReportData = async () => {
+      setLoading(true);
+      let currentHosp = "General Hospital Colombo";
+      const user = auth.currentUser;
+      
+      if (user) {
+        try {
+          const adminDoc = await getDoc(doc(db, "hospital_admins", user.uid));
+          if (adminDoc.exists() && adminDoc.data().hospitalName) {
+            currentHosp = adminDoc.data().hospitalName;
+          } else {
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if (userDoc.exists() && userDoc.data().hospitalName) {
+              currentHosp = userDoc.data().hospitalName;
+            }
+          }
+        } catch (err) {
+          console.error("Report hospital fetch error:", err);
+        }
+      }
+      setHospitalName(currentHosp);
+
       try {
-        const q = query(collection(db, "mothers"), where("hospitalName", "==", hospitalName));
+        const q = query(collection(db, "mothers"), where("hospitalName", "==", currentHosp));
         const snap = await getDocs(q);
-        const data = snap.docs.map(doc => doc.data());
+        const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setReportData(data);
       } catch (err) {
         console.error("Report error:", err);
@@ -24,17 +46,17 @@ const Reports = () => {
   }, []);
 
   const downloadCSV = () => {
-    const headers = ["Name,NIC,Risk Status,Midwife,Area\n"];
-    const rows = reportData.map(m => `"${m.fullName || ''}","${m.nic || ''}","${m.riskStatus || 'Normal'}","${m.midwifeName || ''}","${m.serviceArea || ''}"\n`);
+    const headers = ["Name,NIC,Risk Status,Blood Group,EDD,Midwife,Area\n"];
+    const rows = reportData.map(m => `"${m.fullName || ''}","${m.nic || ''}","${isHighRiskMother(m) ? 'High-Risk' : 'Normal'}","${m.bloodGroup || '—'}","${m.edd || '—'}","${m.midwifeName || ''}","${m.serviceArea || m.mohArea || ''}"\n`);
     const blob = new Blob([...headers, ...rows], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Hospital_Report_${new Date().toLocaleDateString()}.csv`;
+    a.download = `${hospitalName.replace(/\s+/g, '_')}_Maternal_Report_${new Date().toLocaleDateString()}.csv`;
     a.click();
   };
 
-  const highRiskCount = reportData.filter(m => m.riskStatus === 'High-Risk').length;
+  const highRiskCount = reportData.filter(m => isHighRiskMother(m)).length;
 
   return (
     <HospitalLayout>
