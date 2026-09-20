@@ -4,6 +4,7 @@ import { collection, query, where, getDocs, deleteDoc, doc, getDoc } from 'fireb
 import MOHLayout from '../../components/MOHLayout';
 import ModalPortal from '../../components/ModalPortal';
 import { DISTRICTS, getMohAreas, findDistrictByMohArea } from '../../data/sriLankaLocations';
+import { safeRenderText } from '../../utils/securityValidators';
 
 const ManageMidwives = () => {
   const [midwives, setMidwives] = useState([]);
@@ -40,26 +41,37 @@ const ManageMidwives = () => {
   const fetchMidwivesWithStats = async () => {
     setLoading(true);
     try {
-      const q = query(collection(db, "midwives"), where("mohArea", "==", mohArea));
-      const querySnapshot = await getDocs(q);
-      const midwifeList = [];
-      
-      for (const midwifeDoc of querySnapshot.docs) {
-        const midwifeData = midwifeDoc.data();
-        const motherQuery = query(collection(db, "mothers"), where("serviceArea", "==", midwifeData.serviceArea || ''));
-        const motherSnap = await getDocs(motherQuery);
-        const highRiskCount = motherSnap.docs.filter(d => d.data().riskStatus === 'High-Risk').length;
+      // Parallel fetch midwives and mothers for this MOH area
+      const [midSnap, mtrSnap] = await Promise.all([
+        getDocs(query(collection(db, "midwives"), where("mohArea", "==", mohArea))),
+        getDocs(query(collection(db, "mothers"), where("mohArea", "==", mohArea)))
+      ]);
 
-        midwifeList.push({
+      const allMothers = mtrSnap.docs.map(d => d.data());
+
+      const midwifeList = midSnap.docs.map(midwifeDoc => {
+        const data = midwifeDoc.data();
+        const mwMothers = allMothers.filter(m => (m.midwifeName === data.fullName || m.serviceArea === data.serviceArea));
+        const highRisk = mwMothers.filter(m => m.riskStatus === 'High-Risk').length;
+
+        return {
           id: midwifeDoc.id,
-          ...midwifeData,
-          motherCount: motherSnap.size,
-          highRiskCount: highRiskCount
-        });
-      }
+          ...data,
+          fullName: safeRenderText(data.fullName, ''),
+          nic: safeRenderText(data.nic, ''),
+          employeeId: safeRenderText(data.employeeId, ''),
+          phone: safeRenderText(data.phone, ''),
+          email: safeRenderText(data.email, ''),
+          serviceArea: safeRenderText(data.serviceArea || data.phmArea, ''),
+          gnDivisions: safeRenderText(data.gnDivisions, ''),
+          motherCount: mwMothers.length,
+          highRiskCount: highRisk
+        };
+      });
+
       setMidwives(midwifeList);
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error fetching midwives data:", error);
     }
     setLoading(false);
   };
@@ -217,11 +229,12 @@ const ManageMidwives = () => {
         </div>
       )}
 
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+      {/* Header & Area Selectors */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-black text-gray-800 tracking-tight">පවුල් සෞඛ්‍ය නිලධාරීන් කළමනාකරණය</h1>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">පවුල් සෞඛ්‍ය නිලධාරීන් කළමනාකරණය</h1>
           <div className="text-[11px] font-black text-emerald-600 uppercase tracking-widest mt-1">
-            PHM Midwife Registry & Healthcare Allocation - {mohArea} ({district})
+            PHM Midwife Registry & Healthcare Allocation — {mohArea} ({district})
           </div>
         </div>
 
@@ -230,7 +243,7 @@ const ManageMidwives = () => {
           <select
             value={district}
             onChange={handleDistrictChange}
-            className="p-2.5 bg-white border border-gray-200 rounded-2xl text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-none shadow-sm"
+            className="p-2.5 bg-white border border-slate-200 rounded-2xl text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-none shadow-sm"
           >
             {DISTRICTS.map(dist => (
               <option key={dist} value={dist}>{dist}</option>
@@ -249,24 +262,77 @@ const ManageMidwives = () => {
         </div>
       </div>
 
+      {/* 4 KPI Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl shadow-inner shrink-0">
+            👩‍⚕️
+          </div>
+          <div>
+            <div className="text-2xl font-black text-slate-800">{midwives.length}</div>
+            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">MOH පවුල් සෞඛ්‍ය නිලධාරීන්</div>
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl shadow-inner shrink-0">
+            🤰
+          </div>
+          <div>
+            <div className="text-2xl font-black text-slate-800">
+              {midwives.reduce((acc, m) => acc + (m.motherCount || 0), 0)}
+            </div>
+            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">භාරයේ සිටින මව්වරුන්</div>
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-3xl shadow-sm border border-red-100 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center text-2xl shadow-inner shrink-0">
+            🚨
+          </div>
+          <div>
+            <div className="text-2xl font-black text-red-600">
+              {midwives.reduce((acc, m) => acc + (m.highRiskCount || 0), 0)}
+            </div>
+            <div className="text-[11px] font-bold text-red-500 uppercase tracking-wider">අධි-අවදානම් නිරීක්ෂණ</div>
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center text-2xl shadow-inner shrink-0">
+            🏘️
+          </div>
+          <div>
+            <div className="text-2xl font-black text-slate-800">
+              {new Set(midwives.map(m => m.serviceArea).filter(Boolean)).size}
+            </div>
+            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">ආවරණය වන PHM වසම්</div>
+          </div>
+        </div>
+      </div>
+
       {/* Search Bar */}
-      <div className="mb-6 bg-white p-4 rounded-3xl shadow-sm border border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex-1 max-w-md w-full">
+      <div className="mb-6 bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex-1 max-w-md w-full relative">
           <input
             type="text"
             placeholder="නිලධාරිනියගේ නම, NIC, සේවක අංකය හෝ සේවා කලාපය..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
+            className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
           />
+          <span className="absolute left-3 top-2.5 text-slate-400 text-sm">🔍</span>
+          {searchTerm && (
+            <button onClick={() => setSearchTerm('')} className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 font-bold text-xs">✕</button>
+          )}
         </div>
-        <span className="text-xs font-bold text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
-          මුළු නිලධාරීන්: {filteredMidwives.length}
+        <span className="text-xs font-bold text-slate-600 bg-slate-100 px-3.5 py-2 rounded-xl">
+          පෙරූ නිලධාරීන්: <strong className="text-emerald-700">{filteredMidwives.length}</strong>
         </span>
       </div>
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl shadow-sm italic text-gray-400">
+        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl shadow-sm italic text-slate-400">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mb-4"></div>
           දත්ත ලබාගනිමින් පවතී...
         </div>

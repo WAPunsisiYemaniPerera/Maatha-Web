@@ -246,20 +246,20 @@ const AreaMothers = () => {
       )}
 
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-black text-gray-800 tracking-tight">ප්‍රදේශයේ මව්වරුන්ගේ දත්ත පද්ධතිය</h1>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">ප්‍රදේශයේ මව්වරුන්ගේ දත්ත පද්ධතිය</h1>
           <div className="text-[11px] font-black text-emerald-600 uppercase tracking-widest mt-1">
-            MOH Area Maternal Health Registry - {mohArea} ({district})
+            MOH Area Maternal Health Registry — {mohArea} ({district})
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           {/* District & MOH Area Selectors */}
           <select
             value={district}
             onChange={handleDistrictChange}
-            className="p-2.5 bg-white border border-gray-200 rounded-2xl text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-none shadow-sm"
+            className="p-2.5 bg-white border border-slate-200 rounded-2xl text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-none shadow-sm"
           >
             {DISTRICTS.map(dist => (
               <option key={dist} value={dist}>{dist}</option>
@@ -275,31 +275,74 @@ const AreaMothers = () => {
               <option key={area} value={area}>{area}</option>
             ))}
           </select>
+        </div>
+      </div>
 
-          <SummaryMiniCard label="මුළු මව්වරුන්" count={mothers.length} color="text-blue-600" />
-          <SummaryMiniCard label="අධි-අවදානම්" count={highRiskCount} color="text-red-600" />
+      {/* 4 Real-time KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl shadow-inner shrink-0">
+            🤰
+          </div>
+          <div>
+            <div className="text-2xl font-black text-slate-800">{mothers.length}</div>
+            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">මුළු ලියාපදිංචි මව්වරුන්</div>
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-3xl shadow-sm border border-red-100 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center text-2xl shadow-inner shrink-0">
+            🚨
+          </div>
+          <div>
+            <div className="text-2xl font-black text-red-600">{highRiskCount}</div>
+            <div className="text-[11px] font-bold text-red-500 uppercase tracking-wider">අධි-අවදානම් අවස්ථා ({mothers.length > 0 ? Math.round((highRiskCount / mothers.length) * 100) : 0}%)</div>
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl shadow-inner shrink-0">
+            ✅
+          </div>
+          <div>
+            <div className="text-2xl font-black text-slate-800">{mothers.length - highRiskCount}</div>
+            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">සාමාන්‍ය සෞඛ්‍ය තත්ත්වය</div>
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center text-2xl shadow-inner shrink-0">
+            👩‍⚕️
+          </div>
+          <div>
+            <div className="text-2xl font-black text-slate-800">{uniqueMidwives.length}</div>
+            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">ක්ෂේත්‍ර PHM නිලධාරිනියන්</div>
+          </div>
         </div>
       </div>
 
       {/* Filter Section */}
-      <div className="bg-white p-5 rounded-3xl shadow-sm mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-center border border-gray-100">
+      <div className="bg-white p-4 sm:p-5 rounded-3xl shadow-sm mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-center border border-slate-100">
         {/* Search */}
         <div>
-          <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">සොයන්න (Name / NIC / Phone):</span>
-          <input
-            type="text"
-            placeholder="නම, NIC හෝ දුරකථන අංකය..."
-            value={filter.search}
-            onChange={(e) => setFilter({ ...filter, search: e.target.value })}
-            className="w-full text-xs font-medium p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
-          />
+          <span className="text-[10px] font-black text-slate-400 uppercase block mb-1">සොයන්න (Search):</span>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="නම, NIC, දුරකථන හෝ වසම..."
+              value={filter.search}
+              onChange={(e) => setFilter({ ...filter, search: e.target.value })}
+              className="w-full text-xs font-medium pl-8 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+            />
+            <span className="absolute left-2.5 top-2.5 text-slate-400 text-xs">🔍</span>
+          </div>
         </div>
 
         {/* Risk Filter */}
         <div>
-          <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">අවදානම් තත්ත්වය (Risk Status):</span>
+          <span className="text-[10px] font-black text-slate-400 uppercase block mb-1">අවදානම් තත්ත්වය (Risk):</span>
           <select 
-            className="w-full text-xs font-bold p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+            className="w-full text-xs font-bold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
             value={filter.risk}
             onChange={(e) => setFilter({ ...filter, risk: e.target.value })}
           >
@@ -311,9 +354,9 @@ const AreaMothers = () => {
         
         {/* Trimester Filter */}
         <div>
-          <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">ත්‍රෛමාසිකය (Trimester):</span>
+          <span className="text-[10px] font-black text-slate-400 uppercase block mb-1">ත්‍රෛමාසිකය (Trimester):</span>
           <select 
-            className="w-full text-xs font-bold p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+            className="w-full text-xs font-bold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
             value={filter.trimester}
             onChange={(e) => setFilter({ ...filter, trimester: e.target.value })}
           >
@@ -326,9 +369,9 @@ const AreaMothers = () => {
 
         {/* Midwife Filter */}
         <div>
-          <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">PHM නිලධාරිනිය (By Midwife):</span>
+          <span className="text-[10px] font-black text-slate-400 uppercase block mb-1">PHM නිලධාරිනිය (Midwife):</span>
           <select 
-            className="w-full text-xs font-bold p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+            className="w-full text-xs font-bold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
             value={filter.midwife}
             onChange={(e) => setFilter({ ...filter, midwife: e.target.value })}
           >
@@ -341,63 +384,82 @@ const AreaMothers = () => {
       </div>
 
       {loading ? (
-        <div className="py-20 text-center italic text-gray-400 bg-white rounded-3xl shadow-sm">
+        <div className="py-20 text-center italic text-slate-400 bg-white rounded-3xl shadow-sm">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto mb-3"></div>
           දත්ත ලබාගනිමින් පවතී...
         </div>
       ) : (
-        <div className="bg-white rounded-3xl shadow-sm overflow-hidden border border-gray-100">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-slate-50 border-b border-gray-100 text-[10px] font-black text-gray-500 uppercase tracking-wider">
-              <tr>
-                <th className="p-4">මවගේ නම සහ NIC</th>
-                <th className="p-4">ගර්භනී කාලය / EDD</th>
-                <th className="p-4">අවදානම් තත්ත්වය</th>
-                <th className="p-4">PHM නිලධාරිනිය</th>
-                <th className="p-4">සේවා කලාපය</th>
-                <th className="p-4 text-center">ක්‍රියා (Action)</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 text-xs">
-              {filteredMothers.map((mother) => (
-                <tr key={mother.id} className="hover:bg-emerald-50/20 transition-colors">
-                  <td className="p-4">
-                    <div className="font-bold text-gray-800 text-sm">{mother.fullName}</div>
-                    <div className="text-[10px] text-gray-400 font-mono font-bold">NIC: {mother.nic || 'N/A'}</div>
-                  </td>
-                  <td className="p-4">
-                    <div className="font-bold text-slate-700">{mother.gestationalAge || mother.weeks || '—'} සති (Wks)</div>
-                    <div className="text-[10px] text-gray-400 font-mono">EDD: {mother.edd || '—'}</div>
-                  </td>
-                  <td className="p-4">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
-                      mother.riskStatus === 'High-Risk' ? 'bg-red-100 text-red-600 border border-red-200' : 'bg-emerald-100 text-emerald-700'
-                    }`}>
-                      {mother.riskStatus === 'High-Risk' ? '🚨 High-Risk' : '✅ Normal'}
-                    </span>
-                  </td>
-                  <td className="p-4 font-semibold text-gray-700">
-                    {mother.midwifeName || 'නොපවරා ඇත'}
-                  </td>
-                  <td className="p-4">
-                    <span className="text-xs font-medium text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 inline-block">
-                      {mother.serviceArea || mother.phmArea || '—'}
-                    </span>
-                  </td>
-                  <td className="p-4 text-center">
-                    <button
-                      onClick={() => setSelectedMother(mother)}
-                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-sm transition-all"
-                    >
-                      තොරතුරු බලන්න
-                    </button>
-                  </td>
+        <div className="bg-white rounded-3xl shadow-sm overflow-hidden border border-slate-100">
+          <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+            <span className="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider">
+              ප්‍රදේශයේ ලියාපදිංචි ගර්භනී මව්වරුන්ගේ නාමාවලිය
+            </span>
+            <span className="text-xs font-bold text-slate-500 bg-white px-3 py-1 rounded-xl border border-slate-200 shadow-sm">
+              පෙරූ ප්‍රතිඵල: <strong className="text-emerald-700">{filteredMothers.length}</strong> / {mothers.length}
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-slate-50 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                <tr>
+                  <th className="p-4">මවගේ නම සහ NIC</th>
+                  <th className="p-4">ගර්භනී සති / EDD</th>
+                  <th className="p-4">රුධිර ගණය & වයස</th>
+                  <th className="p-4">PHM නිලධාරිනිය</th>
+                  <th className="p-4">සේවා කලාපය</th>
+                  <th className="p-4 text-center">අවදානම් තත්ත්වය</th>
+                  <th className="p-4 text-right">ක්‍රියා (Action)</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs sm:text-sm">
+                {filteredMothers.map((mother) => (
+                  <tr key={mother.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="p-4">
+                      <div className="font-bold text-slate-900">{mother.fullName}</div>
+                      <div className="text-[10px] text-slate-400 font-mono font-bold">NIC: {mother.nic || '—'}</div>
+                    </td>
+                    <td className="p-4">
+                      <div className="font-bold text-slate-800">{mother.gestationalAge || mother.weeks || '—'} සති (Wks)</div>
+                      <div className="text-[10px] text-slate-400 font-mono">EDD: {mother.edd || '—'}</div>
+                    </td>
+                    <td className="p-4">
+                      <span className="px-2 py-0.5 rounded-md bg-red-50 text-red-700 font-black text-xs font-mono">
+                        {mother.bloodGroup || '—'}
+                      </span>
+                      <span className="text-xs text-slate-400 ml-2 font-bold">{mother.age ? `${mother.age} Yrs` : ''}</span>
+                    </td>
+                    <td className="p-4 font-bold text-emerald-800">
+                      {mother.midwifeName || 'නොපවරා ඇත'}
+                    </td>
+                    <td className="p-4">
+                      <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg inline-block">
+                        {mother.serviceArea || mother.phmArea || '—'}
+                      </span>
+                    </td>
+                    <td className="p-4 text-center">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-black uppercase tracking-wider inline-block ${
+                        mother.riskStatus === 'High-Risk' ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                      }`}>
+                        {mother.riskStatus === 'High-Risk' ? '🚨 High-Risk' : '✅ Normal'}
+                      </span>
+                    </td>
+                    <td className="p-4 text-right">
+                      <button
+                        onClick={() => setSelectedMother(mother)}
+                        className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all"
+                      >
+                        විස්තර බලන්න
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           {filteredMothers.length === 0 && (
-            <div className="p-12 text-center text-gray-400 italic text-sm">
-              {mohArea} ප්‍රදේශය සඳහා හමු වූ දත්ත කිසිවක් නැත. (No records found)
+            <div className="p-12 text-center text-slate-400 italic text-sm">
+              {mohArea} ප්‍රදේශය සඳහා තෝරාගත් කොන්දේසි වලට අදාළ දත්ත හමු නොවීය. (No records found)
             </div>
           )}
         </div>
@@ -405,12 +467,5 @@ const AreaMothers = () => {
     </MOHLayout>
   );
 };
-
-const SummaryMiniCard = ({ label, count, color }) => (
-  <div className="bg-white px-5 py-2 rounded-2xl shadow-sm border border-gray-100 text-center">
-    <div className="text-[9px] font-black text-gray-400 uppercase">{label}</div>
-    <div className={`text-xl font-black ${color}`}>{count}</div>
-  </div>
-);
 
 export default AreaMothers;

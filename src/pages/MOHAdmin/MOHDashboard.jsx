@@ -230,43 +230,56 @@ const MOHDashboard = () => {
         </div>
 
         {/* Quick Action Buttons */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Link
             to="/moh-admin/add-midwife"
-            className="group bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:border-emerald-500 hover:shadow-md transition-all flex items-center gap-4"
+            className="group bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:border-emerald-500 hover:shadow-md transition-all flex items-center gap-4"
           >
             <div className="w-12 h-12 rounded-2xl bg-emerald-50 group-hover:bg-emerald-600 group-hover:text-white text-emerald-600 flex items-center justify-center text-xl transition-all shadow-sm">
               👩‍⚕️
             </div>
             <div>
-              <div className="text-sm font-bold text-gray-800 group-hover:text-emerald-700">නිලධාරිනියක් එක් කරන්න</div>
-              <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Register Field Midwife (PHM)</div>
+              <div className="text-sm font-bold text-slate-800 group-hover:text-emerald-700">නිලධාරිනියක් එක් කරන්න</div>
+              <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Register Field Midwife (PHM)</div>
             </div>
           </Link>
 
           <Link
             to="/moh-admin/manage-midwives"
-            className="group bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:border-teal-500 hover:shadow-md transition-all flex items-center gap-4"
+            className="group bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:border-teal-500 hover:shadow-md transition-all flex items-center gap-4"
           >
             <div className="w-12 h-12 rounded-2xl bg-teal-50 group-hover:bg-teal-600 group-hover:text-white text-teal-600 flex items-center justify-center text-xl transition-all shadow-sm">
               📋
             </div>
             <div>
-              <div className="text-sm font-bold text-gray-800 group-hover:text-teal-700">නිලධාරීන් නාමාවලිය</div>
-              <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Midwife Roster & Coverage</div>
+              <div className="text-sm font-bold text-slate-800 group-hover:text-teal-700">නිලධාරීන් නාමාවලිය</div>
+              <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Midwife Roster & Coverage</div>
             </div>
           </Link>
 
           <Link
             to="/moh-admin/area-mothers"
-            className="group bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:border-cyan-500 hover:shadow-md transition-all flex items-center gap-4"
+            className="group bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:border-cyan-500 hover:shadow-md transition-all flex items-center gap-4"
           >
             <div className="w-12 h-12 rounded-2xl bg-cyan-50 group-hover:bg-cyan-600 group-hover:text-white text-cyan-600 flex items-center justify-center text-xl transition-all shadow-sm">
               🤰
             </div>
             <div>
-              <div className="text-sm font-bold text-gray-800 group-hover:text-cyan-700">ප්‍රදේශයේ මව්වරුන්ගේ දත්ත</div>
-              <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Maternal Healthcare Records</div>
+              <div className="text-sm font-bold text-slate-800 group-hover:text-cyan-700">ප්‍රදේශයේ මව්වරුන්ගේ දත්ත</div>
+              <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Maternal Healthcare Records</div>
+            </div>
+          </Link>
+
+          <Link
+            to="/moh-admin/reports"
+            className="group bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:border-purple-500 hover:shadow-md transition-all flex items-center gap-4"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-purple-50 group-hover:bg-purple-600 group-hover:text-white text-purple-600 flex items-center justify-center text-xl transition-all shadow-sm">
+              📄
+            </div>
+            <div>
+              <div className="text-sm font-bold text-slate-800 group-hover:text-purple-700">නිල වාර්තා සහ PDF</div>
+              <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">MOH Reports & Documents</div>
             </div>
           </Link>
         </div>
