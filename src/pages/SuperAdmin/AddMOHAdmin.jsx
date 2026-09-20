@@ -17,6 +17,8 @@ import {
   isValidMobileNumber,
   isValidLandlineNumber,
   cleanPhoneNumber,
+  sanitizeNICInput,
+  sanitizePhoneInput,
   getNICDetails,
   safeRenderText 
 } from '../../utils/securityValidators';
@@ -95,6 +97,12 @@ const AddMOHAdmin = () => {
     const { name, value } = e.target;
     if (name === 'district') {
       setFormData(prev => ({ ...prev, district: value, mohArea: '' }));
+    } else if (name === 'nic') {
+      setFormData(prev => ({ ...prev, nic: sanitizeNICInput(value) }));
+    } else if (name === 'phone') {
+      setFormData(prev => ({ ...prev, phone: sanitizePhoneInput(value) }));
+    } else if (name === 'officePhone') {
+      setFormData(prev => ({ ...prev, officePhone: sanitizePhoneInput(value) }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -598,6 +606,7 @@ const AddMOHAdmin = () => {
                     value={formData.nic}
                     onChange={handleChange}
                     placeholder="198512345678 හෝ 851234567V"
+                    maxLength={12}
                     required
                     className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base font-mono font-bold uppercase focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all"
                   />
@@ -751,6 +760,7 @@ const AddMOHAdmin = () => {
                     value={formData.phone}
                     onChange={handleChange}
                     placeholder="0771234567"
+                    maxLength={10}
                     required
                     className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base font-semibold focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all"
                   />
@@ -777,6 +787,7 @@ const AddMOHAdmin = () => {
                     value={formData.officePhone}
                     onChange={handleChange}
                     placeholder="0112345678"
+                    maxLength={10}
                     className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base font-semibold focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all"
                   />
                   <p className="text-[11px] text-slate-400 mt-1">ස්ථාවර කාර්යාල දුරකථන අංකය (උදා: 0112345678 / 0812345678)</p>

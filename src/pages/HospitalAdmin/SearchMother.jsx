@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { db } from '../../firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import HospitalLayout from '../../components/HospitalLayout';
+import { sanitizeNICInput } from '../../utils/securityValidators';
 
 const SearchMother = () => {
   const [nic, setNic] = useState('');
@@ -48,10 +49,11 @@ const SearchMother = () => {
             <div className="flex-1">
               <input 
                 type="text" 
-                placeholder="හැඳුනුම්පත් අංකය ඇතුළත් කරන්න (e.g. 199012345678)" 
-                className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-sm transition-all"
+                placeholder="හැඳුනුම්පත් අංකය ඇතුළත් කරන්න (e.g. 199012345678 / 901234567V)" 
+                className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none font-mono font-bold text-sm uppercase transition-all"
                 value={nic}
-                onChange={(e) => setNic(e.target.value)}
+                onChange={(e) => setNic(sanitizeNICInput(e.target.value))}
+                maxLength={12}
                 required
               />
             </div>

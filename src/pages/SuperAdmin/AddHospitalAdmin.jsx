@@ -11,6 +11,8 @@ import {
   isValidMobileNumber,
   isValidLandlineNumber,
   cleanPhoneNumber,
+  sanitizeNICInput,
+  sanitizePhoneInput,
   getNICDetails,
   checkEmailUniqueness, 
   checkNICUniqueness, 
@@ -117,7 +119,16 @@ const AddHospitalAdmin = () => {
   }, []);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (name === 'adminNic') {
+      setFormData(prev => ({ ...prev, adminNic: sanitizeNICInput(value) }));
+    } else if (name === 'adminPhone') {
+      setFormData(prev => ({ ...prev, adminPhone: sanitizePhoneInput(value) }));
+    } else if (name === 'hospitalPhone') {
+      setFormData(prev => ({ ...prev, hospitalPhone: sanitizePhoneInput(value) }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const showToast = (msg, type = 'success') => {
@@ -708,6 +719,7 @@ const AddHospitalAdmin = () => {
                     value={formData.hospitalPhone}
                     onChange={handleChange}
                     placeholder="0112691111"
+                    maxLength={10}
                     className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base font-semibold focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all"
                   />
                   <p className="text-[11px] text-slate-400 mt-1">රෝහලේ ස්ථාවර දුරකථන අංකය (උදා: 0112691111 / 0812222222)</p>
@@ -847,6 +859,7 @@ const AddHospitalAdmin = () => {
                     value={formData.adminNic}
                     onChange={handleChange}
                     placeholder="198012345678 හෝ 801234567V"
+                    maxLength={12}
                     required
                     className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base font-mono font-bold uppercase focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all"
                   />
@@ -905,6 +918,7 @@ const AddHospitalAdmin = () => {
                     value={formData.adminPhone}
                     onChange={handleChange}
                     placeholder="0711234567"
+                    maxLength={10}
                     required
                     className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm sm:text-base font-semibold focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all"
                   />

@@ -11,6 +11,8 @@ import {
   isValidNIC, 
   isValidMobileNumber,
   cleanPhoneNumber,
+  sanitizeNICInput,
+  sanitizePhoneInput,
   getNICDetails,
   checkEmailUniqueness, 
   checkNICUniqueness, 
@@ -122,7 +124,13 @@ const AddMidwife = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'nic') {
+      setFormData(prev => ({ ...prev, nic: sanitizeNICInput(value) }));
+    } else if (name === 'phone') {
+      setFormData(prev => ({ ...prev, phone: sanitizePhoneInput(value) }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   // When PHM area is selected from dropdown
@@ -401,6 +409,7 @@ const AddMidwife = () => {
                     value={formData.nic}
                     onChange={handleChange}
                     placeholder="උදා: 198654321098 හෝ 865432109V"
+                    maxLength={12}
                     required
                     disabled={!!editingId}
                     className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all text-xs sm:text-sm font-mono font-bold text-slate-800 uppercase disabled:bg-slate-100 disabled:text-slate-400"
@@ -428,6 +437,7 @@ const AddMidwife = () => {
                     value={formData.phone}
                     onChange={handleChange}
                     placeholder="උදා: 0771234567"
+                    maxLength={10}
                     required
                     className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all text-xs sm:text-sm font-semibold text-slate-800"
                   />

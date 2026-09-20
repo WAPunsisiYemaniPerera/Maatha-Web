@@ -100,6 +100,33 @@ export const isValidSLPhone = (phone) => {
   return isValidMobileNumber(phone) || isValidLandlineNumber(phone);
 };
 
+/**
+ * Sanitizes NIC input value on keystroke:
+ * - Allows only numbers 0-9 and letters V, X, v, x
+ * - Max length: 12 characters
+ * - Converts to uppercase
+ */
+export const sanitizeNICInput = (val) => {
+  if (!val) return '';
+  return String(val)
+    .toUpperCase()
+    .replace(/[^0-9VX]/g, '')
+    .slice(0, 12);
+};
+
+/**
+ * Sanitizes Sri Lankan Phone number input on keystroke:
+ * - Allows only numerical digits 0-9
+ * - Max length: 10 digits
+ */
+export const sanitizePhoneInput = (val) => {
+  if (!val) return '';
+  return String(val)
+    .replace(/[^0-9]/g, '')
+    .slice(0, 10);
+};
+
+
 
 /**
  * Checks if an email is already in use across Firestore `users`, `moh_admins`, `hospital_admins`, or `midwives`.
