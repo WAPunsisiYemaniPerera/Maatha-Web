@@ -3,8 +3,8 @@ import { db } from '../../firebase/config';
 import { collection, getDocs } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
-import { DISTRICTS, findDistrictByMohArea } from '../../data/sriLankaLocations';
-import { formatDisplayDate, safeRenderText, isHighRiskMother, normalizeRiskStatus } from '../../utils/securityValidators';
+import { findDistrictByMohArea } from '../../data/sriLankaLocations';
+import { safeRenderText, isHighRiskMother, normalizeRiskStatus } from '../../utils/securityValidators';
 
 const Dashboard = () => {
   const [counts, setCounts] = useState({
@@ -19,7 +19,6 @@ const Dashboard = () => {
   const [districtData, setDistrictData] = useState([]);
   const [recentHighRisk, setRecentHighRisk] = useState([]);
   const [recentAdmins, setRecentAdmins] = useState([]);
-  const [trimesterData, setTrimesterData] = useState({ first: 0, second: 0, third: 0 });
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
 

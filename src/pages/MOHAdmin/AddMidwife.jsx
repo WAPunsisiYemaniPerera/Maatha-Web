@@ -3,6 +3,7 @@ import { auth, db } from '../../firebase/config';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, collection, getDocs, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import MOHLayout from '../../components/MOHLayout';
+import ModalPortal from '../../components/ModalPortal';
 import { DISTRICTS, getMohAreas, findDistrictByMohArea } from '../../data/sriLankaLocations';
 import { isValidEmail, isValidNIC, checkEmailUniqueness, checkNICUniqueness, evaluatePasswordStrength, formatAuthError } from '../../utils/securityValidators';
 import PasswordSecurityField from '../../components/PasswordSecurityField';
@@ -232,18 +233,24 @@ const AddMidwife = () => {
     <MOHLayout>
       {/* Popups & Modals */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-in zoom-in duration-300">
-            <div className="text-center text-sm">
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] overflow-y-auto bg-blue-950/70 backdrop-blur-md p-4 flex min-h-screen items-center justify-center animate-in fade-in duration-200">
+            <div className="fixed inset-0" onClick={() => setShowDeleteModal(null)} aria-hidden="true" />
+            <div className="relative bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl border border-gray-100 text-center z-10 my-auto animate-in zoom-in-95 duration-200">
+              <div className="bg-red-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-red-600 shadow-inner">
+                <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
               <h3 className="text-lg font-bold text-gray-800">නිලධාරිනිය ඉවත් කරන්නද?</h3>
-              <p className="font-black text-gray-400 uppercase tracking-tighter mb-6">Remove this midwife?</p>
+              <p className="font-black text-gray-400 uppercase tracking-tighter text-xs mt-1 mb-6">Remove this midwife?</p>
               <div className="flex space-x-3">
-                <button onClick={() => setShowDeleteModal(null)} className="flex-1 py-2 bg-gray-100 rounded-lg font-bold">නැත (No)</button>
-                <button onClick={confirmDelete} className="flex-1 py-2 bg-red-600 text-white rounded-lg font-bold shadow-lg shadow-red-200">ඔව් (Yes)</button>
+                <button onClick={() => setShowDeleteModal(null)} className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold text-xs uppercase transition-all">නැත (No)</button>
+                <button onClick={confirmDelete} className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs uppercase shadow-lg shadow-red-200 transition-all">ඔව් (Yes)</button>
               </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
 
       {message && (

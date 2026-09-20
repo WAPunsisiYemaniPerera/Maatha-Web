@@ -3,6 +3,7 @@ import { auth, db } from '../../firebase/config';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, collection, getDocs, deleteDoc, updateDoc } from 'firebase/firestore';
 import AdminLayout from '../../components/AdminLayout';
+import ModalPortal from '../../components/ModalPortal';
 import { DISTRICTS } from '../../data/sriLankaLocations';
 import { isValidEmail, isValidNIC, checkEmailUniqueness, checkNICUniqueness, evaluatePasswordStrength, formatAuthError, formatDisplayDate, safeRenderText } from '../../utils/securityValidators';
 import PasswordSecurityField from '../../components/PasswordSecurityField';
@@ -331,166 +332,173 @@ const AddHospitalAdmin = () => {
     <AdminLayout>
       {/* View Full Hospital Dossier Modal */}
       {viewingHospital && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-blue-950/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-3xl w-full shadow-2xl overflow-hidden border border-blue-100 animate-in zoom-in-95 duration-300">
-            {/* Modal Header */}
-            <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-950 p-6 sm:p-8 text-white relative">
-              <button 
-                onClick={() => setViewingHospital(null)}
-                className="absolute top-5 right-5 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2.5 transition-all"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                <div className="w-18 h-18 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-3xl font-black shadow-inner shrink-0">
-                  🏥
-                </div>
-                <div>
-                  <div className="inline-block px-3 py-1 rounded-full bg-blue-500/30 text-blue-200 text-xs font-black uppercase tracking-wider mb-1.5 border border-blue-400/30">
-                    {viewingHospital.hospitalType}
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] overflow-y-auto bg-blue-950/70 backdrop-blur-md p-3 sm:p-6 flex min-h-screen items-center justify-center animate-in fade-in duration-200">
+            <div className="fixed inset-0" onClick={() => setViewingHospital(null)} aria-hidden="true" />
+            <div className="relative bg-white rounded-3xl max-w-3xl w-full shadow-2xl overflow-hidden border border-blue-100 flex flex-col max-h-[88vh] z-10 my-auto animate-in zoom-in-95 duration-200">
+              {/* Modal Header */}
+              <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-950 p-6 sm:p-8 text-white relative shrink-0">
+                <button 
+                  onClick={() => setViewingHospital(null)}
+                  className="absolute top-5 right-5 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2.5 transition-all"
+                  aria-label="Close"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                  <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-3xl font-black shadow-inner shrink-0">
+                    🏥
                   </div>
-                  <h3 className="text-2xl sm:text-3xl font-black tracking-tight">{viewingHospital.hospitalName}</h3>
-                  <p className="text-sm text-blue-200 font-medium mt-0.5">{viewingHospital.city}, {viewingHospital.district} District</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-6 sm:p-8 space-y-6 max-h-[72vh] overflow-y-auto custom-scrollbar">
-              {/* Quick Facility Badges */}
-              <div className="grid grid-cols-3 gap-3.5">
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center">
-                  <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">මාතෘ ඇඳන් ධාරිතාව</span>
-                  <span className="text-lg sm:text-xl font-black text-blue-900 mt-1 block">
-                    {viewingHospital.maternityWardCapacity ? `${viewingHospital.maternityWardCapacity} ඇඳන්` : 'නොදක්වා ඇත'}
-                  </span>
-                </div>
-
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center">
-                  <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">NICU පහසුකම</span>
-                  <span className={`inline-block mt-1 px-3 py-1 rounded-full text-xs font-bold ${
-                    viewingHospital.hasNicu === 'Yes' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
-                  }`}>
-                    {viewingHospital.hasNicu === 'Yes' ? '✅ ඇත (Available)' : '❌ නැත'}
-                  </span>
-                </div>
-
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center">
-                  <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">ලේ බැංකුව (Blood Bank)</span>
-                  <span className={`inline-block mt-1 px-3 py-1 rounded-full text-xs font-bold ${
-                    viewingHospital.hasBloodBank === 'Yes' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
-                  }`}>
-                    {viewingHospital.hasBloodBank === 'Yes' ? '✅ ඇත (Available)' : '❌ නැත'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Administrator Profile Section */}
-              <div className="bg-blue-50/40 p-5 rounded-2xl border border-blue-100 space-y-3">
-                <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
-                  වෛද්‍ය අධිකාරී / රෝහල් පාලක තොරතුරු (Hospital Administrator Details)
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-slate-400 font-bold block">පරිපාලකගේ නම:</span>
-                    <span className="font-bold text-slate-900 text-base">{viewingHospital.adminName}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 font-bold block">තනතුර (Designation):</span>
-                    <span className="font-semibold text-slate-700">{viewingHospital.designation}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 font-bold block">ජාතික හැඳුනුම්පත (NIC):</span>
-                    <span className="font-bold text-slate-900 font-mono">{viewingHospital.adminNic || 'නොදක්වා ඇත'}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 font-bold block">SLMC ලියාපදිංචි අංකය:</span>
-                    <span className="font-semibold text-slate-700 font-mono">{viewingHospital.slmcNumber || '—'}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 font-bold block">ජංගම දුරකථනය:</span>
-                    <a href={`tel:${viewingHospital.adminPhone}`} className="font-bold text-blue-700 hover:underline">{viewingHospital.adminPhone || '—'}</a>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 font-bold block">රාජකාරි ඊමේල් ලිපිනය:</span>
-                    <a href={`mailto:${viewingHospital.email}`} className="font-bold text-blue-700 hover:underline font-mono">{viewingHospital.email}</a>
+                  <div className="pr-8">
+                    <div className="inline-block px-3 py-1 rounded-full bg-blue-500/30 text-blue-200 text-xs font-black uppercase tracking-wider mb-1.5 border border-blue-400/30">
+                      {viewingHospital.hospitalType}
+                    </div>
+                    <h3 className="text-xl sm:text-3xl font-black tracking-tight">{viewingHospital.hospitalName}</h3>
+                    <p className="text-sm text-blue-200 font-medium mt-0.5">{viewingHospital.city}, {viewingHospital.district} District</p>
                   </div>
                 </div>
               </div>
 
-              {/* Hospital Location & Infrastructure */}
-              <div className="bg-blue-50/40 p-5 rounded-2xl border border-blue-100 space-y-3">
-                <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
-                  ස්ථානීය සහ සන්නිවේදන තොරතුරු (Hospital Contact & Location)
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-slate-400 font-bold block">රෝහල් දුරකථන අංකය:</span>
-                    <span className="font-semibold text-slate-800">{viewingHospital.hospitalPhone || '—'}</span>
+              {/* Modal Body */}
+              <div className="p-5 sm:p-7 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
+                {/* Quick Facility Badges */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center">
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">මාතෘ ඇඳන් ධාරිතාව</span>
+                    <span className="text-lg sm:text-xl font-black text-blue-900 mt-1 block">
+                      {viewingHospital.maternityWardCapacity ? `${viewingHospital.maternityWardCapacity} ඇඳන්` : 'නොදක්වා ඇත'}
+                    </span>
                   </div>
-                  <div>
-                    <span className="text-slate-400 font-bold block">රෝහල් කේතය (Code):</span>
-                    <span className="font-semibold text-slate-800 font-mono">{viewingHospital.hospitalCode || '—'}</span>
+
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center">
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">NICU පහසුකම</span>
+                    <span className={`inline-block mt-1 px-3 py-1 rounded-full text-xs font-bold ${
+                      viewingHospital.hasNicu === 'Yes' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      {viewingHospital.hasNicu === 'Yes' ? '✅ ඇත (Available)' : '❌ නැත'}
+                    </span>
                   </div>
-                  <div className="sm:col-span-2">
-                    <span className="text-slate-400 font-bold block">රෝහල් ලිපිනය (Address):</span>
-                    <span className="font-semibold text-slate-800">{viewingHospital.hospitalAddress || 'ලිපිනය ඇතුළත් කර නැත'}</span>
+
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center">
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">ලේ බැංකුව (Blood Bank)</span>
+                    <span className={`inline-block mt-1 px-3 py-1 rounded-full text-xs font-bold ${
+                      viewingHospital.hasBloodBank === 'Yes' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      {viewingHospital.hasBloodBank === 'Yes' ? '✅ ඇත (Available)' : '❌ නැත'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Administrator Profile Section */}
+                <div className="bg-blue-50/40 p-5 rounded-2xl border border-blue-100 space-y-3">
+                  <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                    වෛද්‍ය අධිකාරී / රෝහල් පාලක තොරතුරු (Hospital Administrator Details)
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-slate-400 font-bold block text-xs">පරිපාලකගේ නම:</span>
+                      <span className="font-bold text-slate-900 text-base">{viewingHospital.adminName}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-bold block text-xs">තනතුර (Designation):</span>
+                      <span className="font-semibold text-slate-700">{viewingHospital.designation}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-bold block text-xs">ජාතික හැඳුනුම්පත (NIC):</span>
+                      <span className="font-bold text-slate-900 font-mono">{viewingHospital.adminNic || 'නොදක්වා ඇත'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-bold block text-xs">SLMC ලියාපදිංචි අංකය:</span>
+                      <span className="font-semibold text-slate-700 font-mono">{viewingHospital.slmcNumber || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-bold block text-xs">ජංගම දුරකථනය:</span>
+                      <a href={`tel:${viewingHospital.adminPhone}`} className="font-bold text-blue-700 hover:underline">{viewingHospital.adminPhone || '—'}</a>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-bold block text-xs">රාජකාරි ඊමේල් ලිපිනය:</span>
+                      <a href={`mailto:${viewingHospital.email}`} className="font-bold text-blue-700 hover:underline font-mono">{viewingHospital.email}</a>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Hospital Location & Infrastructure */}
+                <div className="bg-blue-50/40 p-5 rounded-2xl border border-blue-100 space-y-3">
+                  <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                    ස්ථානීය සහ සන්නිවේදන තොරතුරු (Hospital Contact & Location)
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-slate-400 font-bold block text-xs">රෝහල් දුරකථන අංකය:</span>
+                      <span className="font-semibold text-slate-800">{viewingHospital.hospitalPhone || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-bold block text-xs">රෝහල් කේතය (Code):</span>
+                      <span className="font-semibold text-slate-800 font-mono">{viewingHospital.hospitalCode || '—'}</span>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <span className="text-slate-400 font-bold block text-xs">රෝහල් ලිපිනය (Address):</span>
+                      <span className="font-semibold text-slate-800">{viewingHospital.hospitalAddress || 'ලිපිනය ඇතුළත් කර නැත'}</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Modal Footer */}
-            <div className="p-4 sm:p-5 bg-slate-50 border-t border-slate-100 flex justify-end space-x-3">
-              <button 
-                onClick={() => {
-                  const target = viewingHospital;
-                  setViewingHospital(null);
-                  startEdit(target);
-                }}
-                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-md"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                සංස්කරණය (Edit Details)
-              </button>
-              <button 
-                onClick={() => setViewingHospital(null)}
-                className="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-bold rounded-xl transition-all"
-              >
-                වසන්න (Close)
-              </button>
+              {/* Modal Footer */}
+              <div className="p-4 sm:p-5 bg-slate-50 border-t border-slate-100 flex flex-wrap justify-end gap-3 shrink-0">
+                <button 
+                  onClick={() => {
+                    const target = viewingHospital;
+                    setViewingHospital(null);
+                    startEdit(target);
+                  }}
+                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-md shadow-blue-200"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  සංස්කරණය (Edit Details)
+                </button>
+                <button 
+                  onClick={() => setViewingHospital(null)}
+                  className="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-bold rounded-xl transition-all"
+                >
+                  වසන්න (Close)
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-blue-950/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl p-7 max-w-sm w-full shadow-2xl border border-blue-100 text-center animate-in zoom-in-95 duration-200">
-            <div className="bg-red-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-red-600 shadow-inner">
-              <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-black text-slate-900">රෝහල් පරිපාලක ඉවත් කරන්නද?</h3>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1 mb-6">Are you sure you want to remove this hospital administrator?</p>
-            <div className="flex space-x-3">
-              <button onClick={() => setShowDeleteModal(null)} className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs uppercase transition-all">
-                නැත (Cancel)
-              </button>
-              <button onClick={confirmDelete} className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs uppercase shadow-lg shadow-red-200 transition-all">
-                ඔව් (Delete)
-              </button>
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] overflow-y-auto bg-blue-950/70 backdrop-blur-md p-4 flex min-h-screen items-center justify-center animate-in fade-in duration-200">
+            <div className="fixed inset-0" onClick={() => setShowDeleteModal(null)} aria-hidden="true" />
+            <div className="relative bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl border border-blue-100 text-center z-10 my-auto animate-in zoom-in-95 duration-200">
+              <div className="bg-red-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-red-600 shadow-inner">
+                <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-black text-slate-900">රෝහල් පරිපාලක ඉවත් කරන්නද?</h3>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1 mb-6">Are you sure you want to remove this hospital administrator?</p>
+              <div className="flex space-x-3">
+                <button onClick={() => setShowDeleteModal(null)} className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs uppercase transition-all">
+                  නැත (Cancel)
+                </button>
+                <button onClick={confirmDelete} className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs uppercase shadow-lg shadow-red-200 transition-all">
+                  ඔව් (Delete)
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
 
       {/* Toast Notification */}
@@ -950,6 +958,21 @@ const AddHospitalAdmin = () => {
                 {DISTRICTS.map(dist => (
                   <option key={dist} value={dist}>{dist}</option>
                 ))}
+              </select>
+
+              <select
+                value={tableTypeFilter}
+                onChange={(e) => setTableTypeFilter(e.target.value)}
+                className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm font-bold focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none"
+              >
+                <option value="All">සියලුම රෝහල් කාණ්ඩ (All Types)</option>
+                <option value="National Hospital">National Hospital</option>
+                <option value="Teaching Hospital">Teaching Hospital</option>
+                <option value="Provincial General Hospital">Provincial General Hospital</option>
+                <option value="District General Hospital">District General Hospital</option>
+                <option value="Base Hospital">Base Hospital</option>
+                <option value="Divisional Hospital">Divisional Hospital</option>
+                <option value="Specialized Maternity Hospital">Specialized Maternity Hospital</option>
               </select>
             </div>
           </div>

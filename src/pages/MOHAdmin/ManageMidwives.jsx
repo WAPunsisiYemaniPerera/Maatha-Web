@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { auth, db } from '../../firebase/config';
 import { collection, query, where, getDocs, deleteDoc, doc, getDoc } from 'firebase/firestore';
 import MOHLayout from '../../components/MOHLayout';
+import ModalPortal from '../../components/ModalPortal';
 import { DISTRICTS, getMohAreas, findDistrictByMohArea } from '../../data/sriLankaLocations';
 
 const ManageMidwives = () => {
@@ -108,98 +109,105 @@ const ManageMidwives = () => {
     <MOHLayout>
       {/* Midwife Full Profile Dossier Modal */}
       {selectedMidwife && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-xl w-full shadow-2xl overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-300">
-            <div className="bg-gradient-to-r from-teal-700 to-emerald-800 p-6 text-white relative">
-              <button 
-                onClick={() => setSelectedMidwife(null)}
-                className="absolute top-5 right-5 text-white/80 hover:text-white bg-black/20 hover:bg-black/40 rounded-full p-2 transition-all"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-              <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-3xl shadow-inner">
-                  👩‍⚕️
-                </div>
-                <div>
-                  <span className="inline-block px-2.5 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-black uppercase tracking-wider mb-1">
-                    Public Health Midwife (PHM)
-                  </span>
-                  <h3 className="text-2xl font-bold tracking-tight">{selectedMidwife.fullName}</h3>
-                  <p className="text-xs text-teal-100 font-mono">Employee ID: {selectedMidwife.employeeId || '—'}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-              <div className="grid grid-cols-2 gap-3 text-center">
-                <div className="bg-blue-50 p-3 rounded-2xl">
-                  <span className="text-[10px] font-black text-blue-500 uppercase block">භාරයේ සිටින මව්වරුන්</span>
-                  <span className="text-2xl font-black text-blue-800">{selectedMidwife.motherCount}</span>
-                </div>
-                <div className="bg-red-50 p-3 rounded-2xl">
-                  <span className="text-[10px] font-black text-red-500 uppercase block">අධි-අවදානම් මව්වරුන්</span>
-                  <span className="text-2xl font-black text-red-600">{selectedMidwife.highRiskCount}</span>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-2xl space-y-3 text-xs">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <span className="text-gray-400 font-bold block">ජාතික හැඳුනුම්පත (NIC):</span>
-                    <span className="font-bold text-gray-800 font-mono">{selectedMidwife.nic || 'නොදක්වා ඇත'}</span>
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] overflow-y-auto bg-blue-950/70 backdrop-blur-md p-3 sm:p-6 flex min-h-screen items-center justify-center animate-in fade-in duration-200">
+            <div className="fixed inset-0" onClick={() => setSelectedMidwife(null)} aria-hidden="true" />
+            <div className="relative bg-white rounded-3xl max-w-xl w-full shadow-2xl overflow-hidden border border-gray-100 flex flex-col max-h-[88vh] z-10 my-auto animate-in zoom-in-95 duration-200">
+              <div className="bg-gradient-to-r from-teal-700 to-emerald-800 p-6 text-white relative shrink-0">
+                <button 
+                  onClick={() => setSelectedMidwife(null)}
+                  className="absolute top-5 right-5 text-white/80 hover:text-white bg-black/20 hover:bg-black/40 rounded-full p-2 transition-all"
+                  aria-label="Close"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                <div className="flex items-center space-x-4">
+                  <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-3xl shadow-inner shrink-0">
+                    👩‍⚕️
                   </div>
-                  <div>
-                    <span className="text-gray-400 font-bold block">දුරකථන අංකය:</span>
-                    <a href={`tel:${selectedMidwife.phone}`} className="font-bold text-blue-600 hover:underline">{selectedMidwife.phone || '—'}</a>
-                  </div>
-                  <div>
-                    <span className="text-gray-400 font-bold block">ඊමේල් ලිපිනය:</span>
-                    <span className="font-semibold text-gray-700">{selectedMidwife.email || '—'}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400 font-bold block">සේවා කලාපය (PHM Area):</span>
-                    <span className="font-bold text-emerald-700">{selectedMidwife.serviceArea || '—'}</span>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-gray-400 font-bold block">ග්‍රාම නිලධාරී වසම් (GN Divisions):</span>
-                    <span className="font-semibold text-gray-700">{selectedMidwife.gnDivisions || '—'}</span>
+                  <div className="pr-6">
+                    <span className="inline-block px-2.5 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-black uppercase tracking-wider mb-1">
+                      Public Health Midwife (PHM)
+                    </span>
+                    <h3 className="text-xl sm:text-2xl font-bold tracking-tight">{selectedMidwife.fullName}</h3>
+                    <p className="text-xs text-teal-100 font-mono">Employee ID: {selectedMidwife.employeeId || '—'}</p>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-end">
-              <button 
-                onClick={() => setSelectedMidwife(null)}
-                className="px-5 py-2 bg-slate-800 text-white text-xs font-bold rounded-xl"
-              >
-                වසන්න (Close)
-              </button>
+              <div className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
+                <div className="grid grid-cols-2 gap-3 text-center">
+                  <div className="bg-blue-50 p-3 rounded-2xl">
+                    <span className="text-[10px] font-black text-blue-500 uppercase block">භාරයේ සිටින මව්වරුන්</span>
+                    <span className="text-2xl font-black text-blue-800">{selectedMidwife.motherCount}</span>
+                  </div>
+                  <div className="bg-red-50 p-3 rounded-2xl">
+                    <span className="text-[10px] font-black text-red-500 uppercase block">අධි-අවදානම් මව්වරුන්</span>
+                    <span className="text-2xl font-black text-red-600">{selectedMidwife.highRiskCount}</span>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-2xl space-y-3 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <span className="text-gray-400 font-bold block">ජාතික හැඳුනුම්පත (NIC):</span>
+                      <span className="font-bold text-gray-800 font-mono">{selectedMidwife.nic || 'නොදක්වා ඇත'}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 font-bold block">දුරකථන අංකය:</span>
+                      <a href={`tel:${selectedMidwife.phone}`} className="font-bold text-blue-600 hover:underline">{selectedMidwife.phone || '—'}</a>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 font-bold block">ඊමේල් ලිපිනය:</span>
+                      <span className="font-semibold text-gray-700">{selectedMidwife.email || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 font-bold block">සේවා කලාපය (PHM Area):</span>
+                      <span className="font-bold text-emerald-700">{selectedMidwife.serviceArea || '—'}</span>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <span className="text-gray-400 font-bold block">ග්‍රාම නිලධාරී වසම් (GN Divisions):</span>
+                      <span className="font-semibold text-gray-700">{selectedMidwife.gnDivisions || '—'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-end shrink-0">
+                <button 
+                  onClick={() => setSelectedMidwife(null)}
+                  className="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition-all"
+                >
+                  වසන්න (Close)
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
 
       {/* Delete Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-gray-100 text-center animate-in zoom-in-95 duration-200">
-            <div className="bg-red-100 w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 text-red-600 shadow-inner">
-              <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-bold text-gray-800">නිලධාරිනිය ඉවත් කරන්නද?</h3>
-            <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mt-1 mb-6">Are you sure you want to remove this midwife?</p>
-            <div className="flex space-x-3">
-              <button onClick={() => setShowDeleteModal(null)} className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold text-xs uppercase transition-all">නැත (No)</button>
-              <button onClick={confirmDelete} className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs uppercase shadow-lg shadow-red-200 transition-all">ඔව් (Yes)</button>
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] overflow-y-auto bg-blue-950/70 backdrop-blur-md p-4 flex min-h-screen items-center justify-center animate-in fade-in duration-200">
+            <div className="fixed inset-0" onClick={() => setShowDeleteModal(null)} aria-hidden="true" />
+            <div className="relative bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl border border-gray-100 text-center z-10 my-auto animate-in zoom-in-95 duration-200">
+              <div className="bg-red-100 w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 text-red-600 shadow-inner">
+                <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-gray-800">නිලධාරිනිය ඉවත් කරන්නද?</h3>
+              <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mt-1 mb-6">Are you sure you want to remove this midwife?</p>
+              <div className="flex space-x-3">
+                <button onClick={() => setShowDeleteModal(null)} className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold text-xs uppercase transition-all">නැත (No)</button>
+                <button onClick={confirmDelete} className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs uppercase shadow-lg shadow-red-200 transition-all">ඔව් (Yes)</button>
+              </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
 
       {/* Success Message */}

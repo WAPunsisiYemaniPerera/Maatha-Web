@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { db } from '../../firebase/config';
 import { collection, getDocs } from 'firebase/firestore';
 import AdminLayout from '../../components/AdminLayout';
+import ModalPortal from '../../components/ModalPortal';
 import { DISTRICTS, getMohAreas } from '../../data/sriLankaLocations';
 import { formatDisplayDate, safeRenderText, isHighRiskMother, normalizeRiskStatus } from '../../utils/securityValidators';
 import {
@@ -949,115 +950,118 @@ const ReportsAndDocuments = () => {
 
         {/* Printable Document Modal (Simulates Official Formatted Letterhead) */}
         {showPrintModal && (
-          <div className="fixed inset-0 z-[150] flex items-center justify-center bg-blue-950/70 backdrop-blur-md p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
-            <div className="bg-white rounded-3xl max-w-4xl w-full shadow-2xl border border-blue-100 my-8 overflow-hidden flex flex-col max-h-[92vh]">
-              {/* Modal Top Control Bar */}
-              <div className="p-4 sm:p-5 bg-slate-900 text-white flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <span className="text-xl">🖨️</span>
-                  <span className="font-bold text-sm sm:text-base">Official Document Print Preview</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => window.print()}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-xs uppercase shadow transition-all flex items-center gap-1.5"
-                  >
-                    <span>Print Document</span>
-                  </button>
-                  <button
-                    onClick={() => setShowPrintModal(false)}
-                    className="p-2 text-slate-400 hover:text-white rounded-lg font-bold"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
-
-              {/* Printable Body Content (Simulating Official Letterhead Paper) */}
-              <div className="p-6 sm:p-10 overflow-y-auto space-y-6 text-slate-800 bg-white" id="printable-area">
-                {/* Official Letterhead Header */}
-                <div className="border-b-2 border-slate-900 pb-4 text-center">
-                  <div className="text-xs font-bold text-blue-900 tracking-widest uppercase">
-                    Democratic Socialist Republic of Sri Lanka • Ministry of Health
+          <ModalPortal>
+            <div className="fixed inset-0 z-[9999] overflow-y-auto bg-blue-950/70 backdrop-blur-md p-3 sm:p-6 flex min-h-screen items-center justify-center animate-in fade-in duration-200">
+              <div className="fixed inset-0" onClick={() => setShowPrintModal(false)} aria-hidden="true" />
+              <div className="relative bg-white rounded-3xl max-w-4xl w-full shadow-2xl border border-blue-100 flex flex-col max-h-[88vh] overflow-hidden z-10 my-auto animate-in zoom-in-95 duration-200">
+                {/* Modal Top Control Bar */}
+                <div className="p-4 sm:p-5 bg-slate-900 text-white flex items-center justify-between shrink-0">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xl">🖨️</span>
+                    <span className="font-bold text-sm sm:text-base">Official Document Print Preview</span>
                   </div>
-                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 mt-1 uppercase tracking-tight">
-                    MAATHA NATIONAL MATERNAL & CHILD HEALTH PORTAL
-                  </h2>
-                  <p className="text-xs font-bold text-slate-500 uppercase mt-0.5">
-                    Official Administrative Dossier & Intelligence Registry
-                  </p>
-                  <div className="flex justify-between items-center text-[11px] font-semibold text-slate-600 mt-4 pt-2 border-t border-slate-200">
-                    <span>DOC REF: REF-MTH-{Date.now().toString().slice(-6)}</span>
-                    <span>ISSUED: {new Date().toLocaleDateString('en-GB')} {new Date().toLocaleTimeString()}</span>
-                    <span>CONFIDENTIAL / OFFICIAL</span>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => window.print()}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-xs uppercase shadow transition-all flex items-center gap-1.5"
+                    >
+                      <span>Print Document</span>
+                    </button>
+                    <button
+                      onClick={() => setShowPrintModal(false)}
+                      className="p-2 text-slate-400 hover:text-white rounded-lg font-bold"
+                    >
+                      ✕
+                    </button>
                   </div>
                 </div>
 
-                {/* Report Specific Details */}
-                <div>
-                  <h3 className="text-base font-black text-blue-900 uppercase">
-                    {activeReportType === 'national' && 'National Maternal Health Strategic Summary Report'}
-                    {activeReportType === 'moh' && 'Medical Officers of Health (MOH) Administrative Directory'}
-                    {activeReportType === 'hospital' && 'National Hospital Network & Clinical Facilities Directory'}
-                    {activeReportType === 'midwives' && 'Public Health Midwives (PHM) Field Staff Registry'}
-                    {activeReportType === 'mothers' && 'National Maternal Healthcare & Antenatal Registry'}
-                    {activeReportType === 'high_risk' && 'High-Risk Critical Pregnancies Emergency Monitoring Report'}
-                  </h3>
-                  <p className="text-xs text-slate-500 font-medium">
-                    Filtered Criteria: District: {selectedDistrict} | MOH Area: {selectedMohArea} | Risk: {selectedRisk}
-                  </p>
-                </div>
-
-                {/* Printable Table */}
-                <div className="border border-slate-300 rounded-lg overflow-hidden">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead className="bg-slate-100 border-b border-slate-300 font-bold uppercase text-slate-700">
-                      <tr>
-                        <th className="p-2 border-r border-slate-300">#</th>
-                        <th className="p-2 border-r border-slate-300">Name / Title</th>
-                        <th className="p-2 border-r border-slate-300">NIC / ID</th>
-                        <th className="p-2 border-r border-slate-300">District / MOH</th>
-                        <th className="p-2 border-r border-slate-300">Contact / Email</th>
-                        <th className="p-2">Status / Risk</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-200">
-                      {(activeReportType === 'moh' ? filteredMOH :
-                        activeReportType === 'hospital' ? filteredHospitals :
-                        activeReportType === 'midwives' ? filteredMidwives :
-                        filteredMothers
-                      ).slice(0, 50).map((row, idx) => (
-                        <tr key={row.id || idx}>
-                          <td className="p-2 border-r border-slate-200 text-center font-bold">{idx + 1}</td>
-                          <td className="p-2 border-r border-slate-200 font-bold">{row.fullName || row.hospitalName}</td>
-                          <td className="p-2 border-r border-slate-200">{row.nic || row.hospitalCode || '—'}</td>
-                          <td className="p-2 border-r border-slate-200">{row.district} {row.mohArea ? `(${row.mohArea})` : ''}</td>
-                          <td className="p-2 border-r border-slate-200">{row.phone || row.hospitalPhone || row.email}</td>
-                          <td className="p-2 font-bold">{row.riskStatus || row.status || 'Active'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Official Signatures and Seal Space */}
-                <div className="pt-12 grid grid-cols-2 gap-8 text-center text-xs font-bold text-slate-600">
-                  <div>
-                    <div className="border-t border-slate-400 pt-2 w-48 mx-auto">
-                      Super Administrator
-                      <div className="text-[10px] text-slate-400 font-normal">Maatha Health Portal, Sri Lanka</div>
+                {/* Printable Body Content (Simulating Official Letterhead Paper) */}
+                <div className="p-6 sm:p-10 overflow-y-auto space-y-6 text-slate-800 bg-white" id="printable-area">
+                  {/* Official Letterhead Header */}
+                  <div className="border-b-2 border-slate-900 pb-4 text-center">
+                    <div className="text-xs font-bold text-blue-900 tracking-widest uppercase">
+                      Democratic Socialist Republic of Sri Lanka • Ministry of Health
+                    </div>
+                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 mt-1 uppercase tracking-tight">
+                      MAATHA NATIONAL MATERNAL & CHILD HEALTH PORTAL
+                    </h2>
+                    <p className="text-xs font-bold text-slate-500 uppercase mt-0.5">
+                      Official Administrative Dossier & Intelligence Registry
+                    </p>
+                    <div className="flex justify-between items-center text-[11px] font-semibold text-slate-600 mt-4 pt-2 border-t border-slate-200">
+                      <span>DOC REF: REF-MTH-{Date.now().toString().slice(-6)}</span>
+                      <span>ISSUED: {new Date().toLocaleDateString('en-GB')} {new Date().toLocaleTimeString()}</span>
+                      <span>CONFIDENTIAL / OFFICIAL</span>
                     </div>
                   </div>
+
+                  {/* Report Specific Details */}
                   <div>
-                    <div className="border-t border-slate-400 pt-2 w-48 mx-auto">
-                      Director / Medical Superintendent
-                      <div className="text-[10px] text-slate-400 font-normal">Ministry of Health Verification</div>
+                    <h3 className="text-base font-black text-blue-900 uppercase">
+                      {activeReportType === 'national' && 'National Maternal Health Strategic Summary Report'}
+                      {activeReportType === 'moh' && 'Medical Officers of Health (MOH) Administrative Directory'}
+                      {activeReportType === 'hospital' && 'National Hospital Network & Clinical Facilities Directory'}
+                      {activeReportType === 'midwives' && 'Public Health Midwives (PHM) Field Staff Registry'}
+                      {activeReportType === 'mothers' && 'National Maternal Healthcare & Antenatal Registry'}
+                      {activeReportType === 'high_risk' && 'High-Risk Critical Pregnancies Emergency Monitoring Report'}
+                    </h3>
+                    <p className="text-xs text-slate-500 font-medium">
+                      Filtered Criteria: District: {selectedDistrict} | MOH Area: {selectedMohArea} | Risk: {selectedRisk}
+                    </p>
+                  </div>
+
+                  {/* Printable Table */}
+                  <div className="border border-slate-300 rounded-lg overflow-hidden">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead className="bg-slate-100 border-b border-slate-300 font-bold uppercase text-slate-700">
+                        <tr>
+                          <th className="p-2 border-r border-slate-300">#</th>
+                          <th className="p-2 border-r border-slate-300">Name / Title</th>
+                          <th className="p-2 border-r border-slate-300">NIC / ID</th>
+                          <th className="p-2 border-r border-slate-300">District / MOH</th>
+                          <th className="p-2 border-r border-slate-300">Contact / Email</th>
+                          <th className="p-2">Status / Risk</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200">
+                        {(activeReportType === 'moh' ? filteredMOH :
+                          activeReportType === 'hospital' ? filteredHospitals :
+                          activeReportType === 'midwives' ? filteredMidwives :
+                          filteredMothers
+                        ).slice(0, 50).map((row, idx) => (
+                          <tr key={row.id || idx}>
+                            <td className="p-2 border-r border-slate-200 text-center font-bold">{idx + 1}</td>
+                            <td className="p-2 border-r border-slate-200 font-bold">{row.fullName || row.hospitalName}</td>
+                            <td className="p-2 border-r border-slate-200">{row.nic || row.hospitalCode || '—'}</td>
+                            <td className="p-2 border-r border-slate-200">{row.district} {row.mohArea ? `(${row.mohArea})` : ''}</td>
+                            <td className="p-2 border-r border-slate-200">{row.phone || row.hospitalPhone || row.email}</td>
+                            <td className="p-2 font-bold">{row.riskStatus || row.status || 'Active'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Official Signatures and Seal Space */}
+                  <div className="pt-12 grid grid-cols-2 gap-8 text-center text-xs font-bold text-slate-600">
+                    <div>
+                      <div className="border-t border-slate-400 pt-2 w-48 mx-auto">
+                        Super Administrator
+                        <div className="text-[10px] text-slate-400 font-normal">Maatha Health Portal, Sri Lanka</div>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="border-t border-slate-400 pt-2 w-48 mx-auto">
+                        Director / Medical Superintendent
+                        <div className="text-[10px] text-slate-400 font-normal">Ministry of Health Verification</div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          </ModalPortal>
         )}
 
       </div>

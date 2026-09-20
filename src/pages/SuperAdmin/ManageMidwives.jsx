@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { db } from '../../firebase/config';
 import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore';
 import AdminLayout from '../../components/AdminLayout';
+import ModalPortal from '../../components/ModalPortal';
 import { DISTRICTS, getMohAreas, findDistrictByMohArea } from '../../data/sriLankaLocations';
 import { formatDisplayDate, safeRenderText } from '../../utils/securityValidators';
 
@@ -163,230 +164,237 @@ const ManageMidwives = () => {
 
       {/* Full Midwife Profile Dossier Modal */}
       {viewingMidwife && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-blue-950/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-3xl w-full shadow-2xl overflow-hidden border border-blue-100 animate-in zoom-in-95 duration-300">
-            {/* Modal Header */}
-            <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-950 p-6 sm:p-8 text-white relative">
-              <button 
-                onClick={() => setViewingMidwife(null)}
-                className="absolute top-5 right-5 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2.5 transition-all"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-              
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                <div className="w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-4xl shadow-inner shrink-0">
-                  👩‍⚕️
-                </div>
-                <div className="space-y-1.5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-block px-3 py-1 rounded-full bg-blue-500/30 text-blue-200 text-xs font-black uppercase tracking-wider border border-blue-400/30">
-                      Public Health Midwife (PHM)
-                    </span>
-                    {viewingMidwife.status && (
-                      <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-3 py-0.5 rounded-full text-xs font-bold">
-                        ● {viewingMidwife.status}
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] overflow-y-auto bg-blue-950/70 backdrop-blur-md p-3 sm:p-6 flex min-h-screen items-center justify-center animate-in fade-in duration-200">
+            <div className="fixed inset-0" onClick={() => setViewingMidwife(null)} aria-hidden="true" />
+            <div className="relative bg-white rounded-3xl max-w-3xl w-full shadow-2xl overflow-hidden border border-blue-100 flex flex-col max-h-[88vh] z-10 my-auto animate-in zoom-in-95 duration-300">
+              {/* Modal Header */}
+              <div className="shrink-0 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-950 p-5 sm:p-7 text-white relative">
+                <button 
+                  onClick={() => setViewingMidwife(null)}
+                  className="absolute top-4 sm:top-5 right-4 sm:right-5 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2.5 transition-all z-20"
+                  aria-label="Close"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 pr-8 sm:pr-0">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-3xl sm:text-4xl shadow-inner shrink-0">
+                    👩‍⚕️
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-block px-3 py-1 rounded-full bg-blue-500/30 text-blue-200 text-xs font-black uppercase tracking-wider border border-blue-400/30">
+                        Public Health Midwife (PHM)
                       </span>
-                    )}
-                  </div>
-                  <h3 className="text-2xl sm:text-3xl font-black tracking-tight">{viewingMidwife.fullName}</h3>
-                  <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm opacity-90 font-mono">
-                    <span>ID: {viewingMidwife.employeeId || 'නොදක්වා ඇත'}</span>
-                    <span>•</span>
-                    <span>NIC: {viewingMidwife.nic || '—'}</span>
-                    <span>•</span>
-                    <span>MOH: {viewingMidwife.mohArea || '—'}</span>
+                      {viewingMidwife.status && (
+                        <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-3 py-0.5 rounded-full text-xs font-bold">
+                          ● {viewingMidwife.status}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight">{viewingMidwife.fullName}</h3>
+                    <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm opacity-90 font-mono">
+                      <span>ID: {viewingMidwife.employeeId || 'නොදක්වා ඇත'}</span>
+                      <span>•</span>
+                      <span>NIC: {viewingMidwife.nic || '—'}</span>
+                      <span>•</span>
+                      <span>MOH: {viewingMidwife.mohArea || '—'}</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Modal Body */}
-            <div className="p-6 sm:p-8 space-y-6 max-h-[72vh] overflow-y-auto custom-scrollbar">
-              {/* Quick Stat Highlights */}
-              <div className="grid grid-cols-3 gap-3.5 text-center">
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                  <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">සේවක අංකය (ID)</span>
-                  <span className="text-base sm:text-lg font-black text-slate-800 mt-1 block font-mono">
-                    {viewingMidwife.employeeId || '—'}
+              {/* Modal Body */}
+              <div className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-6 custom-scrollbar">
+                {/* Quick Stat Highlights */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
+                  <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">සේවක අංකය (ID)</span>
+                    <span className="text-base sm:text-lg font-black text-slate-800 mt-1 block font-mono">
+                      {viewingMidwife.employeeId || '—'}
+                    </span>
+                  </div>
+
+                  <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">දිස්ත්‍රික්කය</span>
+                    <span className="text-xs sm:text-sm font-bold text-slate-800 mt-1 block">
+                      {viewingMidwife.district || findDistrictByMohArea(viewingMidwife.mohArea) || '—'}
+                    </span>
+                  </div>
+
+                  <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">සේවා කලාපය</span>
+                    <span className="text-xs sm:text-sm font-bold text-blue-700 mt-1 block">
+                      {viewingMidwife.serviceArea || '—'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Personal & Official Credentials */}
+                <div className="bg-blue-50/40 p-4 sm:p-5 rounded-2xl border border-blue-100 space-y-3">
+                  <h4 className="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                    වෘත්තීය සහ නිල තොරතුරු (Professional Credentials)
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
+                    <div>
+                      <span className="text-slate-400 font-bold block">සම්පූර්ණ නම:</span>
+                      <span className="font-bold text-slate-900 text-sm sm:text-base">{viewingMidwife.fullName}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-bold block">ජාතික හැඳුනුම්පත (NIC):</span>
+                      <span className="font-semibold text-slate-800 font-mono">{viewingMidwife.nic || 'නොදක්වා ඇත'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-bold block">තනතුර:</span>
+                      <span className="font-semibold text-slate-700">{viewingMidwife.designation || 'Public Health Midwife (PHM)'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-bold block">පත් කළ දිනය:</span>
+                      <span className="font-semibold text-slate-700">{viewingMidwife.appointmentDate || '—'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Jurisdiction & Coverage */}
+                <div className="bg-blue-50/40 p-4 sm:p-5 rounded-2xl border border-blue-100 space-y-3">
+                  <h4 className="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                    පරිපාලන බලප්‍රදේශය සහ ග්‍රාම නිලධාරී වසම් (Jurisdiction & Coverage)
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
+                    <div>
+                      <span className="text-slate-400 font-bold block">දිස්ත්‍රික්කය (District):</span>
+                      <span className="font-bold text-slate-900">{viewingMidwife.district || findDistrictByMohArea(viewingMidwife.mohArea) || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-bold block">MOH ප්‍රදේශය (MOH Area):</span>
+                      <span className="font-bold text-blue-700">{viewingMidwife.mohArea || '—'}</span>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <span className="text-slate-400 font-bold block">PHM සේවා කලාපය (Service Area):</span>
+                      <span className="font-bold text-blue-800 text-sm sm:text-base">{viewingMidwife.serviceArea || '—'}</span>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <span className="text-slate-400 font-bold block mb-2">අයත් ග්‍රාම නිලධාරී වසම් (Assigned GN Divisions):</span>
+                      {viewingMidwife.gnDivisions ? (
+                        <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                          {viewingMidwife.gnDivisions.split(',').map((gn, idx) => (
+                            <span key={idx} className="bg-white px-2.5 py-1 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 shadow-2xs">
+                              📍 {gn.trim()}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 font-medium">වසම් දක්වා නැත</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact Channels */}
+                <div className="bg-blue-50/40 p-4 sm:p-5 rounded-2xl border border-blue-100 space-y-3">
+                  <h4 className="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                    සම්බන්ධීකරණ තොරතුරු (Communication Channels)
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
+                    <div>
+                      <span className="text-slate-400 font-bold block">ජංගම දුරකථන අංකය:</span>
+                      {viewingMidwife.phone ? (
+                        <a href={`tel:${viewingMidwife.phone}`} className="font-bold text-blue-700 hover:underline flex items-center gap-1">
+                          📞 {viewingMidwife.phone}
+                        </a>
+                      ) : <span className="text-slate-400">නොදක්වා ඇත</span>}
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-bold block">රාජකාරි ඊමේල් ලිපිනය:</span>
+                      {viewingMidwife.email ? (
+                        <a href={`mailto:${viewingMidwife.email}`} className="font-semibold text-blue-700 hover:underline flex items-center gap-1 font-mono break-all">
+                          ✉️ {viewingMidwife.email}
+                        </a>
+                      ) : <span className="text-slate-400">නොදක්වා ඇත</span>}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-amber-50/80 p-3.5 sm:p-4 rounded-2xl border border-amber-200 text-xs sm:text-sm text-amber-900 flex items-start gap-3">
+                  <span className="text-base sm:text-lg mt-0.5">ℹ️</span>
+                  <span className="leading-relaxed">
+                    <strong>Super Admin ප්‍රතිපත්තිය:</strong> පවුල් සෞඛ්‍ය නිලධාරිනියන් (PHM) ලියාපදිංචි කිරීම සහ සංස්කරණය අදාළ MOH කාර්යාල මඟින් සිදු කෙරේ. Super Admin හට රට පුරා නිලධාරිනියන්ගේ දත්ත පරීක්ෂාව සහ අවශ්‍ය විට පද්ධතියෙන් ඉවත් කිරීම (Delete) සිදු කළ හැක.
                   </span>
                 </div>
-
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                  <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">දිස්ත්‍රික්කය</span>
-                  <span className="text-xs sm:text-sm font-bold text-slate-800 mt-1 block">
-                    {viewingMidwife.district || findDistrictByMohArea(viewingMidwife.mohArea) || '—'}
-                  </span>
-                </div>
-
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                  <span className="text-xs font-black text-slate-400 uppercase tracking-wider block">සේවා කලාපය</span>
-                  <span className="text-xs sm:text-sm font-bold text-blue-700 mt-1 block">
-                    {viewingMidwife.serviceArea || '—'}
-                  </span>
-                </div>
               </div>
 
-              {/* Personal & Official Credentials */}
-              <div className="bg-blue-50/40 p-5 rounded-2xl border border-blue-100 space-y-3">
-                <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
-                  වෘත්තීය සහ නිල තොරතුරු (Professional Credentials)
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-slate-400 font-bold block">සම්පූර්ණ නම:</span>
-                    <span className="font-bold text-slate-900 text-base">{viewingMidwife.fullName}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 font-bold block">ජාතික හැඳුනුම්පත (NIC):</span>
-                    <span className="font-semibold text-slate-800 font-mono">{viewingMidwife.nic || 'නොදක්වා ඇත'}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 font-bold block">තනතුර:</span>
-                    <span className="font-semibold text-slate-700">{viewingMidwife.designation || 'Public Health Midwife (PHM)'}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 font-bold block">පත් කළ දිනය:</span>
-                    <span className="font-semibold text-slate-700">{viewingMidwife.appointmentDate || '—'}</span>
-                  </div>
-                </div>
+              {/* Modal Footer */}
+              <div className="shrink-0 p-4 sm:p-5 bg-slate-50 border-t border-slate-100 flex flex-wrap gap-2 justify-between items-center">
+                <button
+                  onClick={() => {
+                    const target = viewingMidwife;
+                    setViewingMidwife(null);
+                    setShowDeleteModal(target);
+                  }}
+                  className="px-4 sm:px-5 py-2.5 bg-red-50 hover:bg-red-600 hover:text-white text-red-600 text-xs sm:text-sm font-bold rounded-xl transition-all shadow-sm flex items-center gap-1.5"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  නිලධාරිනිය ඉවත් කරන්න (Delete)
+                </button>
+                <button 
+                  onClick={() => setViewingMidwife(null)}
+                  className="px-6 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition-all"
+                >
+                  වසන්න (Close)
+                </button>
               </div>
-
-              {/* Jurisdiction & Coverage */}
-              <div className="bg-blue-50/40 p-5 rounded-2xl border border-blue-100 space-y-3">
-                <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
-                  පරිපාලන බලප්‍රදේශය සහ ග්‍රාම නිලධාරී වසම් (Jurisdiction & Coverage)
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-slate-400 font-bold block">දිස්ත්‍රික්කය (District):</span>
-                    <span className="font-bold text-slate-900">{viewingMidwife.district || findDistrictByMohArea(viewingMidwife.mohArea) || '—'}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 font-bold block">MOH ප්‍රදේශය (MOH Area):</span>
-                    <span className="font-bold text-blue-700">{viewingMidwife.mohArea || '—'}</span>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <span className="text-slate-400 font-bold block">PHM සේවා කලාපය (Service Area):</span>
-                    <span className="font-bold text-blue-800 text-base">{viewingMidwife.serviceArea || '—'}</span>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <span className="text-slate-400 font-bold block mb-2">අයත් ග්‍රාම නිලධාරී වසම් (Assigned GN Divisions):</span>
-                    {viewingMidwife.gnDivisions ? (
-                      <div className="flex flex-wrap gap-2">
-                        {viewingMidwife.gnDivisions.split(',').map((gn, idx) => (
-                          <span key={idx} className="bg-white px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 shadow-2xs">
-                            📍 {gn.trim()}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-slate-400 font-medium">වසම් දක්වා නැත</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Contact Channels */}
-              <div className="bg-blue-50/40 p-5 rounded-2xl border border-blue-100 space-y-3">
-                <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
-                  සම්බන්ධීකරණ තොරතුරු (Communication Channels)
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-slate-400 font-bold block">ජංගම දුරකථන අංකය:</span>
-                    {viewingMidwife.phone ? (
-                      <a href={`tel:${viewingMidwife.phone}`} className="font-bold text-blue-700 hover:underline flex items-center gap-1">
-                        📞 {viewingMidwife.phone}
-                      </a>
-                    ) : <span className="text-slate-400">නොදක්වා ඇත</span>}
-                  </div>
-                  <div>
-                    <span className="text-slate-400 font-bold block">රාජකාරි ඊමේල් ලිපිනය:</span>
-                    {viewingMidwife.email ? (
-                      <a href={`mailto:${viewingMidwife.email}`} className="font-semibold text-blue-700 hover:underline flex items-center gap-1 font-mono">
-                        ✉️ {viewingMidwife.email}
-                      </a>
-                    ) : <span className="text-slate-400">නොදක්වා ඇත</span>}
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-amber-50/80 p-4 rounded-2xl border border-amber-200 text-xs sm:text-sm text-amber-900 flex items-start gap-3">
-                <span className="text-lg mt-0.5">ℹ️</span>
-                <span className="leading-relaxed">
-                  <strong>Super Admin ප්‍රතිපත්තිය:</strong> පවුල් සෞඛ්‍ය නිලධාරිනියන් (PHM) ලියාපදිංචි කිරීම සහ සංස්කරණය අදාළ MOH කාර්යාල මඟින් සිදු කෙරේ. Super Admin හට රට පුරා නිලධාරිනියන්ගේ දත්ත පරීක්ෂාව සහ අවශ්‍ය විට පද්ධතියෙන් ඉවත් කිරීම (Delete) සිදු කළ හැක.
-                </span>
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 sm:p-5 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
-              <button
-                onClick={() => {
-                  const target = viewingMidwife;
-                  setViewingMidwife(null);
-                  setShowDeleteModal(target);
-                }}
-                className="px-5 py-2.5 bg-red-50 hover:bg-red-600 hover:text-white text-red-600 text-sm font-bold rounded-xl transition-all shadow-sm flex items-center gap-1.5"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                නිලධාරිනිය ඉවත් කරන්න (Delete)
-              </button>
-              <button 
-                onClick={() => setViewingMidwife(null)}
-                className="px-6 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-sm font-bold rounded-xl shadow-md transition-all"
-              >
-                වසන්න (Close)
-              </button>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-blue-950/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl p-7 max-w-md w-full shadow-2xl border border-blue-100 text-center animate-in zoom-in-95 duration-200">
-            <div className="bg-red-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-red-600 shadow-inner">
-              <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-black text-slate-900 tracking-tight">පවුල් සෞඛ්‍ය නිලධාරිනිය ඉවත් කරන්නද?</h3>
-            <p className="text-xs font-bold text-slate-400 mt-1">
-              මෙම නිලධාරිනියගේ ගිණුම හා සේවා පැවරුම් පද්ධතියෙන් ස්ථිරවම ඉවත් කරනු ලැබේ.
-            </p>
-            
-            <div className="bg-slate-50 p-4 rounded-2xl my-4 text-left border border-slate-100 text-sm">
-              <div className="font-bold text-slate-900">{showDeleteModal.fullName}</div>
-              <div className="text-slate-500 font-mono text-xs mt-0.5">
-                ID: {showDeleteModal.employeeId || '—'} | MOH: {showDeleteModal.mohArea || '—'}
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] overflow-y-auto bg-blue-950/70 backdrop-blur-md p-4 flex min-h-screen items-center justify-center animate-in fade-in duration-200">
+            <div className="fixed inset-0" onClick={() => setShowDeleteModal(null)} aria-hidden="true" />
+            <div className="relative bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-blue-100 text-center z-10 my-auto animate-in zoom-in-95 duration-200">
+              <div className="bg-red-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-red-600 shadow-inner">
+                <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">පවුල් සෞඛ්‍ය නිලධාරිනිය ඉවත් කරන්නද?</h3>
+              <p className="text-xs font-bold text-slate-400 mt-1">
+                මෙම නිලධාරිනියගේ ගිණුම හා සේවා පැවරුම් පද්ධතියෙන් ස්ථිරවම ඉවත් කරනු ලැබේ.
+              </p>
+              
+              <div className="bg-slate-50 p-4 rounded-2xl my-4 text-left border border-slate-100 text-xs sm:text-sm">
+                <div className="font-bold text-slate-900">{showDeleteModal.fullName}</div>
+                <div className="text-slate-500 font-mono text-xs mt-0.5">
+                  ID: {showDeleteModal.employeeId || '—'} | MOH: {showDeleteModal.mohArea || '—'}
+                </div>
+              </div>
+
+              <div className="flex space-x-3">
+                <button 
+                  onClick={() => setShowDeleteModal(null)} 
+                  className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs uppercase transition-all"
+                >
+                  නැත (Cancel)
+                </button>
+                <button 
+                  onClick={confirmDelete} 
+                  className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs uppercase shadow-lg shadow-red-200 transition-all flex items-center justify-center gap-1.5"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  ඔව් (Delete)
+                </button>
               </div>
             </div>
-
-            <div className="flex space-x-3">
-              <button 
-                onClick={() => setShowDeleteModal(null)} 
-                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs uppercase transition-all"
-              >
-                නැත (Cancel)
-              </button>
-              <button 
-                onClick={confirmDelete} 
-                className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs uppercase shadow-lg shadow-red-200 transition-all flex items-center justify-center gap-1.5"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                ඔව් (Delete)
-              </button>
-            </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
 
       <div className="max-w-7xl mx-auto space-y-8">

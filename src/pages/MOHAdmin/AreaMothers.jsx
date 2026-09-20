@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { auth, db } from '../../firebase/config';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import MOHLayout from '../../components/MOHLayout';
+import ModalPortal from '../../components/ModalPortal';
 import { DISTRICTS, getMohAreas, findDistrictByMohArea } from '../../data/sriLankaLocations';
 import { formatDisplayDate, safeRenderText } from '../../utils/securityValidators';
 
@@ -122,122 +123,126 @@ const AreaMothers = () => {
     <MOHLayout>
       {/* Mother Antenatal Dossier Modal */}
       {selectedMother && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-300">
-            {/* Modal Header */}
-            <div className={`p-6 text-white relative ${
-              selectedMother.riskStatus === 'High-Risk' 
-                ? 'bg-gradient-to-r from-red-700 via-rose-700 to-pink-800' 
-                : 'bg-gradient-to-r from-emerald-700 via-teal-700 to-cyan-800'
-            }`}>
-              <button 
-                onClick={() => setSelectedMother(null)}
-                className="absolute top-5 right-5 text-white/80 hover:text-white bg-black/20 hover:bg-black/40 rounded-full p-2 transition-all"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] overflow-y-auto bg-blue-950/70 backdrop-blur-md p-3 sm:p-6 flex min-h-screen items-center justify-center animate-in fade-in duration-200">
+            <div className="fixed inset-0" onClick={() => setSelectedMother(null)} aria-hidden="true" />
+            <div className="relative bg-white rounded-3xl max-w-2xl w-full shadow-2xl overflow-hidden border border-gray-100 flex flex-col max-h-[88vh] z-10 my-auto animate-in zoom-in-95 duration-200">
+              {/* Modal Header */}
+              <div className={`p-6 text-white relative shrink-0 ${
+                selectedMother.riskStatus === 'High-Risk' 
+                  ? 'bg-gradient-to-r from-red-700 via-rose-700 to-pink-800' 
+                  : 'bg-gradient-to-r from-emerald-700 via-teal-700 to-cyan-800'
+              }`}>
+                <button 
+                  onClick={() => setSelectedMother(null)}
+                  className="absolute top-5 right-5 text-white/80 hover:text-white bg-black/20 hover:bg-black/40 rounded-full p-2 transition-all"
+                  aria-label="Close"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
 
-              <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-3xl shadow-inner">
-                  🤰
-                </div>
-                <div>
-                  <div className="inline-block px-2.5 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-black uppercase tracking-wider mb-1 border border-white/20">
-                    {selectedMother.riskStatus === 'High-Risk' ? '🚨 High-Risk Maternal Alert' : '✅ Normal Pregnancy'}
+                <div className="flex items-center space-x-4">
+                  <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-3xl shadow-inner shrink-0">
+                    🤰
                   </div>
-                  <h3 className="text-2xl font-bold tracking-tight">{selectedMother.fullName}</h3>
-                  <p className="text-xs opacity-90 font-mono">NIC: {selectedMother.nic || 'නොදක්වා ඇත'} | Age: {selectedMother.age || '—'} Yrs</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar">
-              {/* Pregnancy Timeline & Stats */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-center">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block">ගර්භනී කාලය</span>
-                  <span className="text-sm font-black text-slate-800 mt-1 block">
-                    {selectedMother.gestationalAge || selectedMother.weeks || '—'} සති (Wks)
-                  </span>
-                </div>
-
-                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-center">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block">ප්‍රසූති දිනය (EDD)</span>
-                  <span className="text-xs font-bold text-slate-800 mt-1 block font-mono">{selectedMother.edd || 'නොදක්වා ඇත'}</span>
-                </div>
-
-                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-center">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block">රුධිර ගණය (Blood)</span>
-                  <span className="text-sm font-black text-red-600 mt-1 block font-mono">{selectedMother.bloodGroup || '—'}</span>
+                  <div className="pr-6">
+                    <div className="inline-block px-2.5 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-black uppercase tracking-wider mb-1 border border-white/20">
+                      {selectedMother.riskStatus === 'High-Risk' ? '🚨 High-Risk Maternal Alert' : '✅ Normal Pregnancy'}
+                    </div>
+                    <h3 className="text-xl sm:text-2xl font-bold tracking-tight">{selectedMother.fullName}</h3>
+                    <p className="text-xs opacity-90 font-mono">NIC: {selectedMother.nic || 'නොදක්වා ඇත'} | Age: {selectedMother.age || '—'} Yrs</p>
+                  </div>
                 </div>
               </div>
 
-              {/* Clinical Details */}
-              <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 space-y-3">
-                <h4 className="text-xs font-black text-gray-700 uppercase tracking-wider flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
-                  සායනික සහ අවදානම් තොරතුරු (Clinical & Risk Assessment)
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                  <div>
-                    <span className="text-gray-400 font-bold block">අවදානම් සාධක (Risk Details):</span>
-                    <span className={`font-bold ${selectedMother.riskStatus === 'High-Risk' ? 'text-red-600' : 'text-gray-700'}`}>
-                      {selectedMother.riskNotes || selectedMother.riskReason || (selectedMother.riskStatus === 'High-Risk' ? 'Medical Monitoring Advised' : 'සාමාන්‍ය තත්ත්වයේ පවතී')}
+              {/* Modal Body */}
+              <div className="p-5 sm:p-6 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
+                {/* Pregnancy Timeline & Stats */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-center">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block">ගර්භනී කාලය</span>
+                    <span className="text-sm font-black text-slate-800 mt-1 block">
+                      {selectedMother.gestationalAge || selectedMother.weeks || '—'} සති (Wks)
                     </span>
                   </div>
-                  <div>
-                    <span className="text-gray-400 font-bold block">පෙර දරු උපත් (Gravida / Parity):</span>
-                    <span className="font-semibold text-gray-700">{selectedMother.gravida ? `G${selectedMother.gravida} P${selectedMother.parity || 0}` : '—'}</span>
+
+                  <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-center">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block">ප්‍රසූති දිනය (EDD)</span>
+                    <span className="text-xs font-bold text-slate-800 mt-1 block font-mono">{selectedMother.edd || 'නොදක්වා ඇත'}</span>
+                  </div>
+
+                  <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-center">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block">රුධිර ගණය (Blood)</span>
+                    <span className="text-sm font-black text-red-600 mt-1 block font-mono">{selectedMother.bloodGroup || '—'}</span>
+                  </div>
+                </div>
+
+                {/* Clinical Details */}
+                <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 space-y-3">
+                  <h4 className="text-xs font-black text-gray-700 uppercase tracking-wider flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
+                    සායනික සහ අවදානම් තොරතුරු (Clinical & Risk Assessment)
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <span className="text-gray-400 font-bold block">අවදානම් සාධක (Risk Details):</span>
+                      <span className={`font-bold ${selectedMother.riskStatus === 'High-Risk' ? 'text-red-600' : 'text-gray-700'}`}>
+                        {selectedMother.riskNotes || selectedMother.riskReason || (selectedMother.riskStatus === 'High-Risk' ? 'Medical Monitoring Advised' : 'සාමාන්‍ය තත්ත්වයේ පවතී')}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 font-bold block">පෙර දරු උපත් (Gravida / Parity):</span>
+                      <span className="font-semibold text-gray-700">{selectedMother.gravida ? `G${selectedMother.gravida} P${selectedMother.parity || 0}` : '—'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact & Field Staff */}
+                <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 space-y-3">
+                  <h4 className="text-xs font-black text-gray-700 uppercase tracking-wider flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-blue-600"></span>
+                    සම්බන්ධීකරණය සහ PHM වින්නඹු නිලධාරිනිය
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <span className="text-gray-400 font-bold block">මවගේ දුරකථන අංකය:</span>
+                      <a href={`tel:${selectedMother.phone}`} className="font-bold text-blue-600 hover:underline">{selectedMother.phone || '—'}</a>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 font-bold block">හදිසි ඇමතුම් අංකය (Emergency Contact):</span>
+                      <span className="font-semibold text-gray-700">{selectedMother.emergencyPhone || selectedMother.husbandPhone || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 font-bold block">අදාළ PHM නිලධාරිනිය (Midwife):</span>
+                      <span className="font-bold text-emerald-700">{selectedMother.midwifeName || 'නොපවරා ඇත'}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 font-bold block">සේවා කලාපය (PHM Area):</span>
+                      <span className="font-semibold text-gray-700">{selectedMother.serviceArea || selectedMother.phmArea || '—'}</span>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <span className="text-gray-400 font-bold block">ලිපිනය (Home Address):</span>
+                      <span className="font-semibold text-gray-700">{selectedMother.address || '—'}</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Contact & Field Staff */}
-              <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 space-y-3">
-                <h4 className="text-xs font-black text-gray-700 uppercase tracking-wider flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-blue-600"></span>
-                  සම්බන්ධීකරණය සහ PHM වින්නඹු නිලධාරිනිය
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                  <div>
-                    <span className="text-gray-400 font-bold block">මවගේ දුරකථන අංකය:</span>
-                    <a href={`tel:${selectedMother.phone}`} className="font-bold text-blue-600 hover:underline">{selectedMother.phone || '—'}</a>
-                  </div>
-                  <div>
-                    <span className="text-gray-400 font-bold block">හදිසි ඇමතුම් අංකය (Emergency Contact):</span>
-                    <span className="font-semibold text-gray-700">{selectedMother.emergencyPhone || selectedMother.husbandPhone || '—'}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400 font-bold block">අදාළ PHM නිලධාරිනිය (Midwife):</span>
-                    <span className="font-bold text-emerald-700">{selectedMother.midwifeName || 'නොපවරා ඇත'}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400 font-bold block">සේවා කලාපය (PHM Area):</span>
-                    <span className="font-semibold text-gray-700">{selectedMother.serviceArea || selectedMother.phmArea || '—'}</span>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <span className="text-gray-400 font-bold block">ලිපිනය (Home Address):</span>
-                    <span className="font-semibold text-gray-700">{selectedMother.address || '—'}</span>
-                  </div>
-                </div>
+              {/* Modal Footer */}
+              <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center shrink-0">
+                <span className="text-[11px] text-gray-400 font-medium">MOH Area: {selectedMother.mohArea}</span>
+                <button 
+                  onClick={() => setSelectedMother(null)}
+                  className="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition-all shadow-sm"
+                >
+                  වසන්න (Close)
+                </button>
               </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
-              <span className="text-[11px] text-gray-400 font-medium">MOH Area: {selectedMother.mohArea}</span>
-              <button 
-                onClick={() => setSelectedMother(null)}
-                className="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl transition-all shadow-sm"
-              >
-                වසන්න (Close)
-              </button>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
 
       {/* Header */}

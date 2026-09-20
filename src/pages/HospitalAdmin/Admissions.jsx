@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { db } from '../../firebase/config';
 import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 import HospitalLayout from '../../components/HospitalLayout';
+import ModalPortal from '../../components/ModalPortal';
 import { Link } from 'react-router-dom';
 
 const Admissions = () => {
@@ -71,23 +72,26 @@ const Admissions = () => {
     <HospitalLayout>
       {/* Transfer Modal */}
       {transferId && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-in zoom-in duration-300">
-            <h3 className="text-lg font-bold text-gray-800 mb-2">වෙනත් රෝහලකට මාරු කිරීම</h3>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Transfer Mother to Another Hospital</p>
-            <input 
-              type="text" 
-              placeholder="රෝහලේ නම (e.g. Teaching Hospital Kandy)" 
-              className="w-full p-3 bg-gray-50 border rounded-xl mb-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-              value={newHospital}
-              onChange={(e) => setNewHospital(e.target.value)}
-            />
-            <div className="flex space-x-2">
-              <button onClick={() => setTransferId(null)} className="flex-1 py-2 bg-gray-100 rounded-lg font-bold text-xs uppercase text-gray-600">Cancel</button>
-              <button onClick={handleTransfer} className="flex-1 py-2 bg-indigo-600 rounded-lg font-bold text-xs uppercase text-white shadow-lg shadow-indigo-200">Confirm Transfer</button>
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] overflow-y-auto bg-blue-950/70 backdrop-blur-md p-4 flex min-h-screen items-center justify-center animate-in fade-in duration-200">
+            <div className="fixed inset-0" onClick={() => setTransferId(null)} aria-hidden="true" />
+            <div className="relative bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl border border-gray-100 text-center z-10 my-auto animate-in zoom-in-95 duration-200">
+              <h3 className="text-lg font-bold text-gray-800 mb-1">වෙනත් රෝහලකට මාරු කිරීම</h3>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Transfer Mother to Another Hospital</p>
+              <input 
+                type="text" 
+                placeholder="රෝහලේ නම (e.g. Teaching Hospital Kandy)" 
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl mb-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                value={newHospital}
+                onChange={(e) => setNewHospital(e.target.value)}
+              />
+              <div className="flex space-x-2">
+                <button onClick={() => setTransferId(null)} className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl font-bold text-xs uppercase text-gray-600 transition-all">Cancel</button>
+                <button onClick={handleTransfer} className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 rounded-xl font-bold text-xs uppercase text-white shadow-lg shadow-indigo-200 transition-all">Confirm Transfer</button>
+              </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
 
       <div className="flex justify-between items-end mb-8">

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { auth } from '../firebase/config';
 import { signOut } from 'firebase/auth';
+import ModalPortal from './ModalPortal';
 
 const MOHLayout = ({ children }) => {
   const location = useLocation();
@@ -30,23 +31,26 @@ const MOHLayout = ({ children }) => {
     <div className="flex min-h-screen bg-gray-50 font-sans">
       {/* Logout Confirmation Modal */}
       {showLogoutModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in duration-300">
-            <div className="text-center">
-              <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-800">පද්ධතියෙන් ඉවත් වන්නද?</h3>
-              <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-6">Are you sure you want to logout?</p>
-              <div className="flex space-x-3">
-                <button onClick={() => setShowLogoutModal(false)} className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-bold text-sm uppercase">නැත (Cancel)</button>
-                <button onClick={confirmLogout} className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl font-bold text-sm uppercase shadow-lg shadow-red-200 transition-all">ඔව් (Logout)</button>
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] overflow-y-auto bg-blue-950/70 backdrop-blur-md p-4 flex min-h-screen items-center justify-center animate-in fade-in duration-200">
+            <div className="fixed inset-0" onClick={() => setShowLogoutModal(false)} aria-hidden="true" />
+            <div className="relative bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl border border-gray-100 text-center z-10 my-auto animate-in zoom-in-95 duration-200">
+              <div className="text-center">
+                <div className="bg-red-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-red-600 shadow-inner">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-gray-800">පද්ධතියෙන් ඉවත් වන්නද?</h3>
+                <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mt-1 mb-6">Are you sure you want to logout?</p>
+                <div className="flex space-x-3">
+                  <button onClick={() => setShowLogoutModal(false)} className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold text-xs uppercase transition-all">නැත (Cancel)</button>
+                  <button onClick={confirmLogout} className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs uppercase shadow-lg shadow-red-200 transition-all">ඔව් (Logout)</button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
 
       {/* MOH Admin Sidebar */}
@@ -57,22 +61,22 @@ const MOHLayout = ({ children }) => {
         </div>
         
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
-          <Link to="/moh-admin/dashboard" className={`block p-3 rounded-lg transition-all duration-300 transform ${isActive('/moh-admin/dashboard')}`}>
+          <Link to="/moh-admin/dashboard" className={`block p-3 rounded-lg transition-all duration-300 ${isActive('/moh-admin/dashboard')}`}>
             <div className="text-base font-medium">පාලන පුවරුව</div>
             <div className="text-[11px] font-bold opacity-80 uppercase tracking-wide">MOH Dashboard</div>
           </Link>
           
-          <Link to="/moh-admin/add-midwife" className={`block p-3 rounded-lg transition-all duration-300 transform ${isActive('/moh-admin/add-midwife')}`}>
+          <Link to="/moh-admin/add-midwife" className={`block p-3 rounded-lg transition-all duration-300 ${isActive('/moh-admin/add-midwife')}`}>
             <div className="text-base font-medium">නිලධාරීන් එක් කරන්න</div>
             <div className="text-[11px] font-bold opacity-80 uppercase tracking-wide">Register Midwife (PHM)</div>
           </Link>
 
-          <Link to="/moh-admin/manage-midwives" className={`block p-3 rounded-lg transition-all duration-300 transform ${isActive('/moh-admin/manage-midwives')}`}>
+          <Link to="/moh-admin/manage-midwives" className={`block p-3 rounded-lg transition-all duration-300 ${isActive('/moh-admin/manage-midwives')}`}>
             <div className="text-base font-medium">නිලධාරීන් කළමනාකරණය</div>
             <div className="text-[11px] font-bold opacity-80 uppercase tracking-wide">Midwife Management</div>
           </Link>
 
-          <Link to="/moh-admin/area-mothers" className={`block p-3 rounded-lg transition-all duration-300 transform ${isActive('/moh-admin/area-mothers')}`}>
+          <Link to="/moh-admin/area-mothers" className={`block p-3 rounded-lg transition-all duration-300 ${isActive('/moh-admin/area-mothers')}`}>
             <div className="text-base font-medium">ප්‍රදේශයේ මව්වරුන්</div>
             <div className="text-[11px] font-bold opacity-80 uppercase tracking-wide">Mothers in Area</div>
           </Link>
@@ -90,9 +94,9 @@ const MOHLayout = ({ children }) => {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 ml-64 min-h-screen overflow-hidden">
-        <main className={`p-8 transition-all duration-700 ease-out transform ${
-          animate ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+      <div className="flex-1 ml-64 min-h-screen">
+        <main className={`p-8 transition-opacity duration-300 ${
+          animate ? 'opacity-100' : 'opacity-0'
         }`}>
           {children}
         </main>

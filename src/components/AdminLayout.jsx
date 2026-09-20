@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { auth } from '../firebase/config';
 import { signOut } from 'firebase/auth';
+import ModalPortal from './ModalPortal';
 
 const AdminLayout = ({ children }) => {
   const location = useLocation();
@@ -58,7 +59,7 @@ const AdminLayout = ({ children }) => {
       )
     },
     {
-      path: '/super-admin/manage-midwives',
+      path: '/super-admin/midwives',
       labelSi: 'පවුල් සෞඛ්‍ය නිලධාරීන්',
       labelEn: 'Midwives (PHM) Directory',
       icon: (
@@ -68,7 +69,7 @@ const AdminLayout = ({ children }) => {
       )
     },
     {
-      path: '/super-admin/manage-mothers',
+      path: '/super-admin/mothers',
       labelSi: 'මව්වරුන් කළමනාකරණය',
       labelEn: 'National Maternal Registry',
       icon: (
@@ -93,32 +94,35 @@ const AdminLayout = ({ children }) => {
     <div className="flex min-h-screen bg-slate-50 font-sans text-slate-800">
       {/* Logout Confirmation Modal */}
       {showLogoutModal && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-blue-950/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl p-7 max-w-sm w-full shadow-2xl border border-blue-100 text-center animate-in zoom-in-95 duration-200">
-            <div className="bg-red-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-red-600 shadow-inner">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-black text-slate-900 tracking-tight">පද්ධතියෙන් ඉවත් වන්නද?</h3>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1 mb-6">Are you sure you want to logout?</p>
-            
-            <div className="flex space-x-3">
-              <button 
-                onClick={() => setShowLogoutModal(false)}
-                className="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200 transition-all text-xs uppercase"
-              >
-                නැත (Cancel)
-              </button>
-              <button 
-                onClick={confirmLogout}
-                className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 shadow-lg shadow-red-200 transition-all text-xs uppercase flex items-center justify-center gap-1.5"
-              >
-                ඔව් (Logout)
-              </button>
+        <ModalPortal>
+          <div className="fixed inset-0 z-[9999] overflow-y-auto bg-blue-950/70 backdrop-blur-md p-4 flex min-h-screen items-center justify-center animate-in fade-in duration-200">
+            <div className="fixed inset-0" onClick={() => setShowLogoutModal(false)} aria-hidden="true" />
+            <div className="relative bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl border border-blue-100 text-center z-10 my-auto animate-in zoom-in-95 duration-200">
+              <div className="bg-red-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-red-600 shadow-inner">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">පද්ධතියෙන් ඉවත් වන්නද?</h3>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1 mb-6">Are you sure you want to logout?</p>
+              
+              <div className="flex space-x-3">
+                <button 
+                  onClick={() => setShowLogoutModal(false)}
+                  className="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200 transition-all text-xs uppercase"
+                >
+                  නැත (Cancel)
+                </button>
+                <button 
+                  onClick={confirmLogout}
+                  className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 shadow-lg shadow-red-200 transition-all text-xs uppercase flex items-center justify-center gap-1.5"
+                >
+                  ඔව් (Logout)
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
 
       {/* Desktop Sidebar (Royal Blue & Crisp White Aesthetic) */}
@@ -298,8 +302,8 @@ const AdminLayout = ({ children }) => {
 
       {/* Main Content Viewport */}
       <div className="flex-1 lg:ml-72 min-h-screen pt-16 lg:pt-0 flex flex-col bg-slate-50">
-        <main className={`flex-1 p-4 sm:p-6 lg:p-10 transition-all duration-500 ease-out transform ${
-          animate ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
+        <main className={`flex-1 p-4 sm:p-6 lg:p-10 transition-opacity duration-300 ${
+          animate ? 'opacity-100' : 'opacity-0'
         }`}>
           {children}
         </main>
