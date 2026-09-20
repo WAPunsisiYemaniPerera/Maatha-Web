@@ -349,15 +349,30 @@ const AddMidwife = () => {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Left Column: Personal / Identification */}
-              <div className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Section 1: Personal & Identity Details */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center font-black text-sm border border-emerald-200 shadow-sm">1</div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">පෞද්ගලික සහ නිල හැඳුනුම් තොරතුරු (Personal & Identity Details)</h3>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <InputField label="සම්පූර්ණ නම" sub="Full Name" name="fullName" value={formData.fullName} onChange={handleChange} placeholder="උදා: ඩබ්. එම්. සුනේත්‍රා පෙරේරා මහත්මිය" required />
                 <InputField label="ජාතික හැඳුනුම්පත් අංකය" sub="NIC Number" name="nic" value={formData.nic} onChange={handleChange} placeholder="උදා: 198654321098 / 865432109V" required disabled={!!editingId} />
                 <InputField label="දුරකථන අංකය" sub="Phone Number" name="phone" value={formData.phone} onChange={handleChange} placeholder="උදා: 0771234567" required />
                 <InputField label="සේවක / නිල හැඳුනුම් අංකය" sub="PHM Employee ID" name="employeeId" value={formData.employeeId} onChange={handleChange} placeholder="උදා: PHM-HOM-042" required />
+              </div>
+            </div>
 
+            {/* Section 2: Jurisdiction & PHM Service Area Assignment */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+                <div className="w-8 h-8 rounded-xl bg-teal-50 text-teal-800 flex items-center justify-center font-black text-sm border border-teal-200 shadow-sm">2</div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">සේවා බලප්‍රදේශය සහ කොට්ඨාසය (Jurisdiction & PHM Area Allocation)</h3>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Locked District Field */}
                 <div>
                   <label className="block text-xs font-black text-slate-700 mb-1.5 uppercase tracking-wider">
@@ -368,11 +383,6 @@ const AddMidwife = () => {
                     <span className="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider">🔒 Locked</span>
                   </div>
                 </div>
-              </div>
-
-              {/* Right Column: Work & PHM Service Assignment */}
-              <div className="space-y-4">
-                <InputField label="නිල විද්‍යුත් තැපෑල (App Login)" sub="Official Email Address" name="email" type="email" value={formData.email} onChange={handleChange} placeholder="උදා: sunethra.phm@maatha.lk" required disabled={!!editingId} />
 
                 {/* Locked MOH Area Field */}
                 <div>
@@ -491,21 +501,65 @@ const AddMidwife = () => {
               </div>
             </div>
 
-            {/* Password Field (Only on creation) */}
-            {!editingId && (
-              <div className="border-t border-slate-100 pt-5">
-                <div className="max-w-xl">
-                  <PasswordSecurityField
-                    label="පද්ධති පිවිසුම් මුරපදය (Security Login Password)"
-                    value={formData.password}
-                    onChange={handleChange}
-                    name="password"
-                    placeholder="ශක්තිමත් මුරපදයක් ඇතුළත් කරන්න (Mobile App Login)"
-                    required
-                  />
+            {/* Section 3: Security & Mobile App Login Credentials */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+                <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-800 flex items-center justify-center font-black text-sm border border-purple-200 shadow-sm">3</div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900">පද්ධති සහ Mobile App පිවිසුම් තොරතුරු (Mobile App Login Credentials)</h3>
+                  <p className="text-xs text-slate-400 font-medium">වින්නඹු නිලධාරිනිය Mobile App එකට ලොග් වීම සඳහා මෙම ඊමේල් ලිපිනය සහ මුරපදය භාවිතා කරයි.</p>
                 </div>
               </div>
-            )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-5 bg-gradient-to-br from-slate-50 to-emerald-50/30 rounded-3xl border border-emerald-100/80">
+                {/* Official Login Email */}
+                <div>
+                  <label className="block text-xs font-black text-slate-700 mb-1.5 uppercase tracking-wider">
+                    රාජකාරි ඊමේල් ලිපිනය (Login Email) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="උදා: sunethra.phm@maatha.lk"
+                    required
+                    disabled={!!editingId}
+                    className="w-full p-3 bg-white border border-slate-200 rounded-2xl text-xs sm:text-sm font-mono font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none transition-all disabled:bg-slate-100 disabled:text-slate-400"
+                  />
+                  <p className="text-[11px] text-slate-500 mt-1.5 font-medium flex items-center gap-1">
+                    <span>💡</span> මෙම ඊමේල් ලිපිනය මඟින් නිලධාරිනිය Mobile App එකට ලොග් වේ.
+                  </p>
+                </div>
+
+                {/* Password Field with Strength Indicator */}
+                <div>
+                  {!editingId ? (
+                    <div>
+                      <label className="block text-xs font-black text-slate-700 mb-1.5 uppercase tracking-wider">
+                        ආරක්ෂිත මුරපදය (Security Login Password) <span className="text-red-500">*</span>
+                      </label>
+                      <PasswordSecurityField
+                        value={formData.password}
+                        onChange={handleChange}
+                        name="password"
+                        placeholder="ශක්තිමත් මුරපදයක් ඇතුළත් කරන්න..."
+                        required={!editingId}
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-full flex flex-col justify-center">
+                      <label className="block text-xs font-black text-slate-700 mb-1.5 uppercase tracking-wider">
+                        ආරක්ෂිත මුරපදය (Security Login Password)
+                      </label>
+                      <div className="bg-white p-3.5 rounded-2xl border border-slate-200 text-xs sm:text-sm text-slate-600 font-semibold flex items-center gap-2 shadow-sm">
+                        <span>🔒</span> ආරක්ෂක හේතුන් මත මුරපදය මෙතැනින් වෙනස් කළ නොහැක. (Password Protected)
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
 
             <div className="pt-2 flex flex-col sm:flex-row gap-3">
               <button 
