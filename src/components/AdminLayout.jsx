@@ -59,7 +59,7 @@ const AdminLayout = ({ children }) => {
       )
     },
     {
-      path: '/super-admin/midwives',
+      path: '/super-admin/manage-midwives',
       labelSi: 'පවුල් සෞඛ්‍ය නිලධාරීන්',
       labelEn: 'Midwives (PHM) Directory',
       icon: (
@@ -69,7 +69,7 @@ const AdminLayout = ({ children }) => {
       )
     },
     {
-      path: '/super-admin/mothers',
+      path: '/super-admin/manage-mothers',
       labelSi: 'මව්වරුන් කළමනාකරණය',
       labelEn: 'National Maternal Registry',
       icon: (

@@ -36,7 +36,9 @@ function App() {
         <Route path="/super-admin/add-moh" element={<AddMOHAdmin />} />
         <Route path="/super-admin/add-hospital" element={<AddHospitalAdmin />} />
         <Route path="/super-admin/manage-midwives" element={<ManageMidwives />} />
+        <Route path="/super-admin/midwives" element={<ManageMidwives />} />
         <Route path="/super-admin/manage-mothers" element={<ManageMothers />} />
+        <Route path="/super-admin/mothers" element={<ManageMothers />} />
         <Route path="/super-admin/reports" element={<ReportsAndDocuments />} />
 
         {/* MOH Admin Routes */}

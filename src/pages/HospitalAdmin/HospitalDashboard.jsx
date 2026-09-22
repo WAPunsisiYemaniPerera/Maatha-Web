@@ -62,9 +62,9 @@ const HospitalDashboard = () => {
     <HospitalLayout>
       <div className="space-y-8 max-w-6xl mx-auto">
         {/* Header banner */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-8 rounded-3xl text-white shadow-xl">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 p-8 rounded-3xl text-white shadow-xl border border-teal-900/40">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-black uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/30 text-[10px] font-black uppercase tracking-wider">
               <span>🏥</span> Active Clinical Terminal
             </div>
             <h1 className="text-3xl font-black tracking-tight">{hospitalName}</h1>
@@ -76,7 +76,7 @@ const HospitalDashboard = () => {
           <div className="flex items-center gap-3">
             <Link
               to="/hospital-admin/search-mother"
-              className="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg shadow-indigo-900/50 transition-all flex items-center gap-2 active:scale-95"
+              className="px-6 py-3.5 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg shadow-teal-900/40 transition-all flex items-center gap-2 active:scale-95"
             >
               <span>🔍</span> හදිසි මව්වරුන් සෙවීම (Emergency Search)
             </Link>
@@ -85,7 +85,7 @@ const HospitalDashboard = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-7 rounded-3xl shadow-sm border border-slate-100 border-l-8 border-indigo-600">
+          <div className="bg-white p-7 rounded-3xl shadow-sm border border-slate-100 border-l-8 border-teal-600">
             <div className="flex items-center justify-between">
               <p className="text-slate-500 text-xs font-black uppercase tracking-wider">ඇතුළත් කරගත් මව්වරුන්</p>
               <span className="text-2xl">🤰</span>
@@ -103,13 +103,13 @@ const HospitalDashboard = () => {
             <p className="text-4xl font-black text-red-600">{loading ? '...' : stats.highRisk}</p>
           </div>
 
-          <div className="bg-white p-7 rounded-3xl shadow-sm border border-slate-100 border-l-8 border-emerald-500">
+          <div className="bg-white p-7 rounded-3xl shadow-sm border border-slate-100 border-l-8 border-cyan-500">
             <div className="flex items-center justify-between">
-              <p className="text-emerald-700 text-xs font-black uppercase tracking-wider">සාමාන්‍ය තත්ත්වයේ මව්වරුන්</p>
+              <p className="text-cyan-700 text-xs font-black uppercase tracking-wider">සාමාන්‍ය තත්ත්වයේ මව්වරුන්</p>
               <span className="text-2xl">✅</span>
             </div>
             <p className="text-[10px] font-black text-slate-400 uppercase mt-1 mb-3">Stable / Normal Care</p>
-            <p className="text-4xl font-black text-emerald-700">{loading ? '...' : stats.normal}</p>
+            <p className="text-4xl font-black text-cyan-700">{loading ? '...' : stats.normal}</p>
           </div>
         </div>
 
@@ -117,7 +117,7 @@ const HospitalDashboard = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <Link
             to="/hospital-admin/search-mother"
-            className="p-5 bg-white rounded-2xl border border-slate-200/80 hover:border-indigo-500 hover:shadow-md transition-all group"
+            className="p-5 bg-white rounded-2xl border border-slate-200/80 hover:border-teal-500 hover:shadow-md transition-all group"
           >
             <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">🔍</div>
             <div className="text-xs font-black text-slate-800 uppercase">Search by NIC</div>
@@ -126,7 +126,7 @@ const HospitalDashboard = () => {
 
           <Link
             to="/hospital-admin/admissions"
-            className="p-5 bg-white rounded-2xl border border-slate-200/80 hover:border-indigo-500 hover:shadow-md transition-all group"
+            className="p-5 bg-white rounded-2xl border border-slate-200/80 hover:border-teal-500 hover:shadow-md transition-all group"
           >
             <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">📋</div>
             <div className="text-xs font-black text-slate-800 uppercase">Manage In-Patients</div>
@@ -135,16 +135,16 @@ const HospitalDashboard = () => {
 
           <Link
             to="/hospital-admin/reports"
-            className="p-5 bg-white rounded-2xl border border-slate-200/80 hover:border-indigo-500 hover:shadow-md transition-all group"
+            className="p-5 bg-white rounded-2xl border border-slate-200/80 hover:border-teal-500 hover:shadow-md transition-all group"
           >
             <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">📊</div>
             <div className="text-xs font-black text-slate-800 uppercase">Hospital Reports</div>
             <div className="text-[11px] text-slate-500 font-semibold mt-0.5">වාර්තා සහ CSV Export</div>
           </Link>
 
-          <div className="p-5 bg-indigo-50/50 rounded-2xl border border-indigo-100 flex flex-col justify-center">
-            <div className="text-[10px] font-black text-indigo-700 uppercase tracking-widest mb-1">Maatha Cloud Network</div>
-            <div className="text-xs font-bold text-indigo-900 leading-snug">සම්බන්ධිත ජාතික සෞඛ්‍ය දත්ත පද්ධතිය සක්‍රියයි.</div>
+          <div className="p-5 bg-teal-50/60 rounded-2xl border border-teal-100 flex flex-col justify-center">
+            <div className="text-[10px] font-black text-teal-700 uppercase tracking-widest mb-1">Maatha Cloud Network</div>
+            <div className="text-xs font-bold text-teal-950 leading-snug">සම්බන්ධිත ජාතික සෞඛ්‍ය දත්ත පද්ධතිය සක්‍රියයි.</div>
           </div>
         </div>
 
@@ -155,7 +155,7 @@ const HospitalDashboard = () => {
               <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">මෑතකදී ඇතුළත් කරගත් මව්වරුන්</h3>
               <p className="text-xs text-slate-500 font-semibold mt-0.5">Recently Admitted In-Patients in {hospitalName}</p>
             </div>
-            <Link to="/hospital-admin/admissions" className="text-xs font-black text-indigo-600 hover:underline">
+            <Link to="/hospital-admin/admissions" className="text-xs font-black text-teal-600 hover:underline">
               සියල්ල බලන්න ➔
             </Link>
           </div>
@@ -180,7 +180,7 @@ const HospitalDashboard = () => {
                       </td>
                       <td className="p-4">
                         <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase ${
-                          isHighRiskMother(m) ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
+                          isHighRiskMother(m) ? 'bg-red-100 text-red-700' : 'bg-teal-100 text-teal-700'
                         }`}>
                           {isHighRiskMother(m) ? 'High-Risk' : 'Normal'}
                         </span>
@@ -191,7 +191,7 @@ const HospitalDashboard = () => {
                       <td className="p-4 text-right">
                         <Link
                           to={`/hospital-admin/update-clinical/${m.id}`}
-                          className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-600 font-bold rounded-lg transition-all"
+                          className="px-3 py-1.5 bg-teal-50 hover:bg-teal-600 hover:text-white text-teal-700 font-bold rounded-lg transition-all"
                         >
                           View & Update
                         </Link>

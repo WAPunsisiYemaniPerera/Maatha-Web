@@ -204,8 +204,8 @@ const SearchMother = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-1 rounded-md bg-indigo-100 text-indigo-700 font-mono text-[10px] font-black uppercase tracking-wider">
-                Emergency Medical Portal
+              <span className="px-2.5 py-1 rounded-md bg-teal-50 text-teal-700 font-mono text-[10px] font-black uppercase tracking-wider border border-teal-200">
+                Medical Clinical Portal
               </span>
               <span className="text-xs text-slate-400 font-bold">•</span>
               <span className="text-xs text-slate-500 font-bold">{currentHospital}</span>
@@ -229,7 +229,7 @@ const SearchMother = () => {
         </div>
 
         {/* Search Console */}
-        <div className="bg-white p-6 sm:p-7 rounded-3xl shadow-sm border border-indigo-50">
+        <div className="bg-white p-6 sm:p-7 rounded-3xl shadow-sm border border-teal-50">
           <div className="flex flex-wrap items-center gap-4 mb-4 pb-3 border-b border-slate-100">
             <span className="text-xs font-black text-slate-400 uppercase tracking-widest">සෙවුම් ක්‍රමය තෝරන්න:</span>
             <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
@@ -239,7 +239,7 @@ const SearchMother = () => {
                 value="nic" 
                 checked={searchType === 'nic'} 
                 onChange={() => setSearchType('nic')}
-                className="text-indigo-600 focus:ring-indigo-500" 
+                className="text-teal-600 focus:ring-teal-500" 
               />
               <span>ජාතික හැඳුනුම්පත (NIC)</span>
             </label>
@@ -250,7 +250,7 @@ const SearchMother = () => {
                 value="phone" 
                 checked={searchType === 'phone'} 
                 onChange={() => setSearchType('phone')}
-                className="text-indigo-600 focus:ring-indigo-500" 
+                className="text-teal-600 focus:ring-teal-500" 
               />
               <span>දුරකථන අංකය (Phone)</span>
             </label>
@@ -261,7 +261,7 @@ const SearchMother = () => {
                 value="name" 
                 checked={searchType === 'name'} 
                 onChange={() => setSearchType('name')}
-                className="text-indigo-600 focus:ring-indigo-500" 
+                className="text-teal-600 focus:ring-teal-500" 
               />
               <span>මවගේ නම (Name)</span>
             </label>
@@ -281,7 +281,7 @@ const SearchMother = () => {
                     ? "දුරකථන අංකය ඇතුළත් කරන්න (e.g. 0771234567)" 
                     : "මවගේ නම ඇතුළත් කරන්න (e.g. Kumari Perera)"
                 }
-                className="w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-sm text-slate-800 transition-all placeholder:font-normal placeholder:text-slate-400"
+                className="w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-teal-500 outline-none font-bold text-sm text-slate-800 transition-all placeholder:font-normal placeholder:text-slate-400"
                 value={searchTerm}
                 onChange={(e) => {
                   const val = e.target.value;
@@ -294,7 +294,7 @@ const SearchMother = () => {
             <button 
               type="submit" 
               disabled={loading}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest transition-all shadow-lg shadow-indigo-100 active:scale-95 flex items-center justify-center gap-2 shrink-0"
+              className="bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest transition-all shadow-lg shadow-teal-600/20 active:scale-95 flex items-center justify-center gap-2 shrink-0"
             >
               {loading ? (
                 <>
@@ -332,7 +332,7 @@ const SearchMother = () => {
             <div className={`p-6 sm:p-8 text-white flex flex-col md:flex-row md:items-center justify-between gap-6 ${
               motherData.isHighRisk 
                 ? 'bg-gradient-to-r from-red-600 via-rose-600 to-amber-700' 
-                : 'bg-gradient-to-r from-indigo-700 via-indigo-600 to-blue-600'
+                : 'bg-gradient-to-r from-teal-800 via-teal-700 to-cyan-800'
             }`}>
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
@@ -367,7 +367,7 @@ const SearchMother = () => {
 
                 <Link
                   to={`/hospital-admin/update-clinical/${motherData.id}`}
-                  className="px-5 py-2.5 bg-white text-indigo-900 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-indigo-50 shadow-md transition-all flex items-center gap-2"
+                  className="px-5 py-2.5 bg-white text-teal-900 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-teal-50 shadow-md transition-all flex items-center gap-2"
                 >
                   <span>🩺</span> Update Clinical Notes
                 </Link>
@@ -492,7 +492,7 @@ const SearchMother = () => {
                   </div>
                   <Link
                     to={`/hospital-admin/update-clinical/${motherData.id}`}
-                    className="text-xs font-black text-indigo-600 hover:text-indigo-800 hover:underline flex items-center gap-1"
+                    className="text-xs font-black text-teal-600 hover:text-teal-800 hover:underline flex items-center gap-1"
                   >
                     <span>+ අලුත් පරීක්ෂණයක් එක් කරන්න</span>
                   </Link>
@@ -515,7 +515,7 @@ const SearchMother = () => {
                         {motherData.clinicalHistory.map((item, idx) => (
                           <tr key={idx} className="hover:bg-slate-50 transition-colors">
                             <td className="p-3.5 font-bold text-slate-800 font-mono">{item.date || '—'}</td>
-                            <td className="p-3.5 font-black text-indigo-700">{item.bp || '—'}</td>
+                            <td className="p-3.5 font-black text-teal-700">{item.bp || '—'}</td>
                             <td className="p-3.5 font-bold text-slate-700">{item.weight ? `${item.weight} kg` : '—'}</td>
                             <td className="p-3.5 font-bold text-slate-700">{item.sugarLevel || '—'}</td>
                             <td className="p-3.5 font-bold text-slate-700">{item.fetalHeartRate ? `${item.fetalHeartRate} bpm` : '—'}</td>
@@ -553,7 +553,7 @@ const SearchMother = () => {
                 {motherData.hospitalName !== currentHospital && (
                   <button 
                     onClick={() => setShowAdmitConfirmModal(true)}
-                    className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase text-xs rounded-xl shadow-md transition-all active:scale-95"
+                    className="px-6 py-2.5 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white font-black uppercase text-xs rounded-xl shadow-md transition-all active:scale-95"
                   >
                     Admit to {currentHospital}
                   </button>
@@ -585,7 +585,7 @@ const InfoRow = ({ label, value, isPhone = false, highlight = false, span = fals
   <div className={span ? 'sm:col-span-2' : ''}>
     <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{label}</p>
     <p className={`text-xs font-bold mt-0.5 ${
-      highlight ? 'text-indigo-900 font-black' : 'text-slate-800'
+      highlight ? 'text-teal-900 font-black' : 'text-slate-800'
     } ${isPhone ? 'font-mono' : ''}`}>
       {value || '—'}
     </p>

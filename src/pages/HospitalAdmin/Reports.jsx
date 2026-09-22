@@ -62,11 +62,11 @@ const Reports = () => {
     <HospitalLayout>
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">වාර්තා සහ දත්ත විශ්ලේෂණය</h1>
-          <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mt-1">{hospitalName} - Reports</p>
+          <h1 className="text-3xl font-black text-slate-800 tracking-tight">වෛද්‍ය වාර්තා සහ දත්ත විශ්ලේෂණය</h1>
+          <p className="text-xs text-teal-600 font-bold uppercase tracking-wider mt-1">{hospitalName} - Clinical Reports</p>
         </div>
-        <button onClick={downloadCSV} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-blue-700 shadow-md text-sm transition-all flex items-center gap-2">
-          <span>📥</span> CSV බාගත කරන්න
+        <button onClick={downloadCSV} className="bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white px-6 py-3 rounded-2xl font-bold shadow-md shadow-teal-600/20 text-xs uppercase tracking-wider transition-all flex items-center gap-2 active:scale-95">
+          <span>📥</span> CSV වාර්තාව බාගත කරන්න
         </button>
       </div>
 
@@ -77,38 +77,42 @@ const Reports = () => {
       </div>
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl shadow-sm">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-3"></div>
-          <p className="text-gray-400 text-xs font-bold">වාර්තා දත්ත ලබාගනිමින් පවතී...</p>
+        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl shadow-sm border border-slate-100">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mb-3"></div>
+          <p className="text-slate-400 text-xs font-bold">වාර්තා දත්ත ලබාගනිමින් පවතී...</p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+        <div className="bg-white rounded-3xl shadow-sm overflow-hidden border border-slate-100">
           <table className="w-full text-left">
-            <thead className="bg-gray-50 text-[10px] font-black text-gray-400 uppercase">
+            <thead className="bg-slate-50 text-[10px] font-black text-slate-500 uppercase tracking-wider border-b border-slate-100">
               <tr>
                 <th className="p-4">මවගේ නම</th>
                 <th className="p-4">හැඳුනුම්පත</th>
+                <th className="p-4">රුධිර ගණය</th>
                 <th className="p-4">තත්ත්වය</th>
                 <th className="p-4">ප්‍රදේශය</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50 text-xs">
+            <tbody className="divide-y divide-slate-50 text-xs">
               {reportData.length > 0 ? (
                 reportData.map((m, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                    <td className="p-4 font-bold text-gray-700">{m.fullName}</td>
-                    <td className="p-4 text-gray-500 font-mono">{m.nic || '—'}</td>
+                  <tr key={idx} className="hover:bg-teal-50/30 transition-colors">
+                    <td className="p-4 font-bold text-slate-800">{m.fullName}</td>
+                    <td className="p-4 text-slate-500 font-mono font-semibold">{m.nic || '—'}</td>
+                    <td className="p-4 font-bold text-slate-700">{m.bloodGroup || '—'}</td>
                     <td className="p-4">
-                      <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase ${m.riskStatus === 'High-Risk' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
-                        {m.riskStatus || 'Normal'}
+                      <span className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase ${
+                        isHighRiskMother(m) ? 'bg-red-50 text-red-600' : 'bg-teal-50 text-teal-700'
+                      }`}>
+                        {isHighRiskMother(m) ? 'High-Risk' : 'Normal'}
                       </span>
                     </td>
-                    <td className="p-4 text-gray-500">{m.serviceArea || '—'}</td>
+                    <td className="p-4 text-slate-600">{m.serviceArea || m.mohArea || '—'}</td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="4" className="p-12 text-center text-gray-400 italic">
+                  <td colSpan="5" className="p-12 text-center text-slate-400 italic">
                     කිසිදු වාර්තා දත්තයක් හමු නොවීය.
                   </td>
                 </tr>
