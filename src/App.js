@@ -17,6 +17,8 @@ import ManageMidwivesMOH from './pages/MOHAdmin/ManageMidwives';
 import AreaMothers from './pages/MOHAdmin/AreaMothers';
 import MOHReports from './pages/MOHAdmin/MOHReports';
 import PHMAreas from './pages/MOHAdmin/PHMAreas';
+import MOHThriposhaManagement from './pages/MOHAdmin/ThriposhaManagement';
+import ThriposhaManagement from './pages/ThriposhaManagement';
 
 // Hospital Admin Pages
 import HospitalDashboard from './pages/HospitalAdmin/HospitalDashboard';
@@ -48,6 +50,8 @@ function App() {
         <Route path="/moh-admin/area-mothers" element={<AreaMothers />} />
         <Route path="/moh-admin/phm-areas" element={<PHMAreas />} />
         <Route path="/moh-admin/reports" element={<MOHReports />} />
+        <Route path="/moh-admin/thriposha" element={<MOHThriposhaManagement />} />
+        <Route path="/thriposha-management" element={<ThriposhaManagement />} />
 
         {/* Hospital Admin Routes */}
         <Route path="/hospital-admin/dashboard" element={<HospitalDashboard />} />

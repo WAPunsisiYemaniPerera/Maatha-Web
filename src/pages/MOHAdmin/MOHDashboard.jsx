@@ -211,7 +211,7 @@ const MOHDashboard = () => {
         </div>
 
         {/* Quick Action Buttons */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           <Link
             to="/moh-admin/add-midwife"
             className="group bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:border-emerald-500 hover:shadow-md transition-all flex items-center gap-3.5"
@@ -261,6 +261,19 @@ const MOHDashboard = () => {
             <div>
               <div className="text-sm font-bold text-slate-800 group-hover:text-cyan-700">ප්‍රදේශයේ මව්වරුන්</div>
               <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Maternal Registry</div>
+            </div>
+          </Link>
+
+          <Link
+            to="/moh-admin/thriposha"
+            className="group bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:border-amber-500 hover:shadow-md transition-all flex items-center gap-3.5"
+          >
+            <div className="w-11 h-11 rounded-2xl bg-amber-50 group-hover:bg-amber-600 group-hover:text-white text-amber-600 flex items-center justify-center text-xl transition-all shadow-sm shrink-0">
+              📦
+            </div>
+            <div>
+              <div className="text-sm font-bold text-slate-800 group-hover:text-amber-700">ත්‍රිපෝෂ කළමනාකරණය</div>
+              <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Thriposha Stock</div>
             </div>
           </Link>
 
