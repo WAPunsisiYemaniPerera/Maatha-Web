@@ -444,7 +444,7 @@ const ReportsAndDocuments = () => {
         )}
 
         {/* Top Header Card (Blue & White Clinical Look) */}
-        <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl shadow-blue-950/15 border border-blue-800/40 relative overflow-hidden">
+        <div className="bg-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl shadow-blue-950/15 border border-blue-800/40 relative overflow-hidden">
           <div className="absolute right-0 top-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
           
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">

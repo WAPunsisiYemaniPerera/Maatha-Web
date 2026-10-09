@@ -380,7 +380,7 @@ const AddHospitalAdmin = () => {
             <div className="fixed inset-0" onClick={() => setViewingHospital(null)} aria-hidden="true" />
             <div className="relative bg-white rounded-3xl max-w-3xl w-full shadow-2xl overflow-hidden border border-blue-100 flex flex-col max-h-[88vh] z-10 my-auto animate-in zoom-in-95 duration-200">
               {/* Modal Header */}
-              <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-950 p-6 sm:p-8 text-white relative shrink-0">
+              <div className="bg-slate-900 p-6 sm:p-8 text-white relative shrink-0">
                 <button 
                   onClick={() => setViewingHospital(null)}
                   className="absolute top-5 right-5 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2.5 transition-all"
@@ -564,7 +564,7 @@ const AddHospitalAdmin = () => {
 
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header Title (Blue and White) */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-950 text-white p-6 sm:p-8 lg:p-10 rounded-3xl shadow-2xl border border-blue-800/40 relative overflow-hidden">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 bg-slate-900 text-white p-6 sm:p-8 lg:p-10 rounded-3xl shadow-2xl border border-blue-800/40 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
           <div className="relative z-10">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-500/20 text-blue-200 text-xs sm:text-sm font-bold mb-2 border border-blue-400/20">
@@ -587,7 +587,7 @@ const AddHospitalAdmin = () => {
 
         {/* Registration / Edit Form (Blue & White) */}
         <div className="bg-white p-6 sm:p-8 lg:p-10 rounded-3xl shadow-sm border border-blue-100 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-400"></div>
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-blue-600"></div>
 
           <div className="mb-8 border-b border-slate-100 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>

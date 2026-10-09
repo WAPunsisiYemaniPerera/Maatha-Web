@@ -178,8 +178,8 @@ const ManageMothers = () => {
               {/* Modal Header */}
               <div className={`shrink-0 p-5 sm:p-7 text-white relative ${
                 viewingMother.riskStatus === 'High-Risk' 
-                  ? 'bg-gradient-to-r from-red-700 via-rose-800 to-slate-950' 
-                  : 'bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-950'
+                  ? 'bg-red-900' 
+                  : 'bg-slate-900'
               }`}>
                 <button 
                   onClick={() => setViewingMother(null)}
@@ -241,7 +241,7 @@ const ManageMothers = () => {
                       </div>
                       <div className="w-full bg-blue-200/60 rounded-full h-3 sm:h-4 overflow-hidden p-0.5">
                         <div 
-                          className="bg-gradient-to-r from-blue-600 to-indigo-600 h-full rounded-full transition-all duration-700 shadow-sm"
+                          className="bg-blue-600 h-full rounded-full transition-all duration-700 shadow-sm"
                           style={{ width: `${progressPercent}%` }}
                         ></div>
                       </div>
@@ -436,7 +436,7 @@ const ManageMothers = () => {
 
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Executive Header Banner (Blue & White Theme) */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-950 text-white p-6 sm:p-8 lg:p-10 rounded-3xl shadow-2xl border border-blue-800/40 relative overflow-hidden">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 bg-slate-900 text-white p-6 sm:p-8 lg:p-10 rounded-3xl shadow-2xl border border-blue-800/40 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
           <div className="relative z-10">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-500/20 text-blue-200 text-xs sm:text-sm font-bold mb-2 border border-blue-400/20">

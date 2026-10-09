@@ -157,7 +157,7 @@ const Dashboard = () => {
       <div className="space-y-8 pb-10 max-w-7xl mx-auto">
         
         {/* 1. Hero Welcome & System Overview Banner (Blue & White Theme) */}
-        <div className="relative overflow-hidden bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-950 rounded-3xl p-6 sm:p-8 lg:p-10 text-white shadow-2xl border border-blue-800/40">
+        <div className="relative overflow-hidden bg-slate-900 rounded-3xl p-6 sm:p-8 lg:p-10 text-white shadow-2xl border border-blue-800/40">
           <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
           <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -353,7 +353,7 @@ const Dashboard = () => {
                     </div>
                     <div className="w-full bg-slate-100 h-3.5 rounded-full overflow-hidden p-0.5">
                       <div 
-                        className="h-full bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full transition-all duration-1000 ease-out"
+                        className="h-full bg-blue-600 rounded-full transition-all duration-1000 ease-out"
                         style={{ width: `${Math.max(percentage, 4)}%` }}
                       ></div>
                     </div>
