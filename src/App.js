@@ -25,7 +25,7 @@ import HospitalDashboard from './pages/HospitalAdmin/HospitalDashboard';
 import SearchMother from './pages/HospitalAdmin/SearchMother';
 import Admissions from './pages/HospitalAdmin/Admissions';
 import Reports from './pages/HospitalAdmin/Reports';
-import UpdateClinical from './pages/HospitalAdmin/UpdateClinical'; // අලුතින් එක් කළා
+import UpdateClinical from './pages/HospitalAdmin/UpdateClinical'; 
 
 function App() {
   return (

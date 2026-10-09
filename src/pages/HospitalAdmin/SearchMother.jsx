@@ -100,7 +100,8 @@ const SearchMother = () => {
           midwifeName: safeRenderText(data.midwifeName, 'නොදනී'),
           midwifePhone: safeRenderText(data.midwifePhone, '—'),
           hospitalName: safeRenderText(data.hospitalName, ''),
-          status: safeRenderText(data.status, 'Active'),
+          pregnancyStatus: safeRenderText(data.pregnancyStatus, 'Antenatal'),
+          hospitalStatus: safeRenderText(data.hospitalStatus, 'None'),
           riskStatus: isHigh ? 'High-Risk' : normalizeRiskStatus(data),
           isHighRisk: isHigh,
           riskReason: safeRenderText(data.riskReason || data.notes || data.riskNotes, ''),
@@ -133,7 +134,7 @@ const SearchMother = () => {
       const motherRef = doc(db, "mothers", motherData.id);
       await updateDoc(motherRef, {
         hospitalName: currentHospital,
-        status: "Admitted",
+        hospitalStatus: "Admitted",
         admittedDate: serverTimestamp(),
         lastHospital: motherData.hospitalName || null
       });
@@ -141,7 +142,7 @@ const SearchMother = () => {
       setMotherData(prev => ({
         ...prev,
         hospitalName: currentHospital,
-        status: "Admitted"
+        hospitalStatus: "Admitted"
       }));
 
       setSuccessMessage(`මව සාර්ථකව ${currentHospital} රෝහලට ඇතුළත් කර ගන්නා ලදී! (Admitted Successfully)`);
@@ -346,9 +347,12 @@ const SearchMother = () => {
                   )}
                   {motherData.hospitalName && (
                     <span className="px-3 py-1 rounded-full bg-black/20 text-white text-[10px] font-bold">
-                      🏥 Current Hospital: {motherData.hospitalName} ({motherData.status})
+                      🏥 Current Hospital: {motherData.hospitalName} ({motherData.hospitalStatus})
                     </span>
                   )}
+                  <span className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white border border-white/20 text-[10px] font-bold">
+                    🤰 Pregnancy Status: {motherData.pregnancyStatus}
+                  </span>
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-black tracking-tight">{motherData.fullName}</h2>
                 <p className="text-white/80 text-xs font-semibold">
@@ -435,7 +439,8 @@ const SearchMother = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                     <InfoRow label="නිලධාරිනියගේ නම" value={motherData.midwifeName} highlight={true} />
                     <InfoRow label="නිලධාරිනියගේ දුරකථනය" value={motherData.midwifePhone} isPhone={true} />
-                    <InfoRow label="වත්මන් රෝහල් තත්ත්වය" value={motherData.hospitalName ? `${motherData.hospitalName} (${motherData.status})` : 'කිසිදු රෝහලකට ඇතුළත් වී නැත'} span={true} />
+                    <InfoRow label="ගර්භණී තත්ත්වය" value={motherData.pregnancyStatus} />
+                    <InfoRow label="වත්මන් රෝහල් තත්ත්වය" value={motherData.hospitalName ? `${motherData.hospitalName} (${motherData.hospitalStatus})` : 'කිසිදු රෝහලකට ඇතුළත් වී නැත'} />
                   </div>
 
                   <div className="pt-2 border-t border-slate-200">

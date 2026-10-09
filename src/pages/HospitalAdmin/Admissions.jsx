@@ -37,7 +37,7 @@ const Admissions = () => {
     setHospitalName(currentHosp);
 
     try {
-      const q = query(collection(db, "mothers"), where("hospitalName", "==", currentHosp));
+      const q = query(collection(db, "mothers"), where("hospitalName", "==", currentHosp), where("hospitalStatus", "==", "Admitted"));
       const querySnapshot = await getDocs(q);
       const list = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setAdmittedMothers(list);
@@ -57,7 +57,7 @@ const Admissions = () => {
         const motherRef = doc(db, "mothers", motherId);
         await updateDoc(motherRef, {
           hospitalName: null,
-          status: "Discharged",
+          hospitalStatus: "Discharged",
           dischargedDate: new Date()
         });
         setMessage("මව සාර්ථකව රෝහලෙන් පිටත් කරන ලදී. (Discharged Successfully)");
@@ -142,6 +142,8 @@ const Admissions = () => {
               <tr>
                 <th className="p-5">මවගේ නම සහ හැඳුනුම්පත (Mother & NIC)</th>
                 <th className="p-5">අවදානම් තත්ත්වය (Risk)</th>
+                <th className="p-5">ගර්භණී තත්ත්වය (Pregnancy Status)</th>
+                <th className="p-5">රෝහල් තත්ත්වය (Hospital Status)</th>
                 <th className="p-5">ඇතුළත් කළ දිනය (Admitted Date)</th>
                 <th className="p-5 text-right">ක්‍රියා (Actions)</th>
               </tr>
@@ -158,6 +160,16 @@ const Admissions = () => {
                       isHighRiskMother(mother) ? 'bg-red-100 text-red-600' : 'bg-teal-100 text-teal-700'
                     }`}>
                       {isHighRiskMother(mother) ? 'High-Risk' : 'Normal'}
+                    </span>
+                  </td>
+                  <td className="p-5">
+                    <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-black uppercase">
+                      {mother.pregnancyStatus || 'Antenatal'}
+                    </span>
+                  </td>
+                  <td className="p-5">
+                    <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-black uppercase">
+                      {mother.hospitalStatus || 'None'}
                     </span>
                   </td>
                   <td className="p-5">

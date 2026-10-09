@@ -39,6 +39,8 @@ const ManageMothers = () => {
           serviceArea: safeRenderText(data.serviceArea || data.phmArea, ''),
           midwifeName: safeRenderText(data.midwifeName, ''),
           hospitalName: safeRenderText(data.hospitalName, ''),
+          pregnancyStatus: safeRenderText(data.pregnancyStatus, 'Antenatal'),
+          hospitalStatus: safeRenderText(data.hospitalStatus, 'None'),
           riskStatus: isHigh ? 'High-Risk' : normalizeRiskStatus(data),
           isHighRisk: isHigh,
           notes: safeRenderText(data.notes || data.riskNotes || data.riskReason, ''),
@@ -623,6 +625,8 @@ const ManageMothers = () => {
                   <tr className="bg-slate-50 border-b border-slate-100 text-slate-600 text-left text-xs font-black uppercase tracking-wider">
                     <th className="py-4 px-5">මවගේ නම සහ තොරතුරු</th>
                     <th className="py-4 px-4 text-center">අවදානම් තත්ත්වය</th>
+                    <th className="py-4 px-4 text-center">ගර්භණී තත්ත්වය</th>
+                    <th className="py-4 px-4 text-center">රෝහල් තත්ත්වය</th>
                     <th className="py-4 px-4">ගර්භනී සති / EDD</th>
                     <th className="py-4 px-4">දිස්ත්‍රික්කය & MOH</th>
                     <th className="py-4 px-4">PHM කලාපය & නිලධාරිනිය</th>
@@ -665,7 +669,6 @@ const ManageMothers = () => {
                           </div>
                         </td>
 
-                        {/* Risk Status */}
                         <td className="py-4 px-4 text-center whitespace-nowrap">
                           <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black uppercase ${
                             mother.riskStatus === 'High-Risk' 
@@ -673,6 +676,16 @@ const ManageMothers = () => {
                             : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                           }`}>
                             {mother.riskStatus === 'High-Risk' ? '🚨 High-Risk' : '✅ Normal'}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 text-center whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200 text-xs font-black uppercase">
+                            {mother.pregnancyStatus || 'Antenatal'}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 text-center whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200 text-xs font-black uppercase">
+                            {mother.hospitalStatus || 'None'}
                           </span>
                         </td>
 

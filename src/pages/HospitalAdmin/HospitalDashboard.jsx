@@ -38,7 +38,7 @@ const HospitalDashboard = () => {
       setHospitalName(currentHosp);
 
       try {
-        const q = query(collection(db, "mothers"), where("hospitalName", "==", currentHosp));
+        const q = query(collection(db, "mothers"), where("hospitalName", "==", currentHosp), where("hospitalStatus", "==", "Admitted"));
         const snap = await getDocs(q);
         const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         const highRisk = docs.filter(d => isHighRiskMother(d)).length;
@@ -166,6 +166,8 @@ const HospitalDashboard = () => {
                 <tr>
                   <th className="p-4">මවගේ නම සහ NIC</th>
                   <th className="p-4">අවදානම් තත්ත්වය</th>
+                  <th className="p-4">ගර්භණී තත්ත්වය</th>
+                  <th className="p-4">රෝහල් තත්ත්වය</th>
                   <th className="p-4">MOH / සේවා කොට්ඨාශය</th>
                   <th className="p-4 text-right">ක්‍රියා</th>
                 </tr>
@@ -183,6 +185,16 @@ const HospitalDashboard = () => {
                           isHighRiskMother(m) ? 'bg-red-100 text-red-700' : 'bg-teal-100 text-teal-700'
                         }`}>
                           {isHighRiskMother(m) ? 'High-Risk' : 'Normal'}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-[9px] font-black uppercase">
+                          {m.pregnancyStatus || 'Antenatal'}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[9px] font-black uppercase">
+                          {m.hospitalStatus || 'None'}
                         </span>
                       </td>
                       <td className="p-4 text-slate-600 font-medium">
