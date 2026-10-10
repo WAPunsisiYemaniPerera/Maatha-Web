@@ -11,7 +11,10 @@ const MOHLayout = ({ children }) => {
   const [animate, setAnimate] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [adminProfile, setAdminProfile] = useState(null);
+  const [adminProfile, setAdminProfile] = useState(() => {
+    const cached = sessionStorage.getItem('mohAdminProfile');
+    return cached ? JSON.parse(cached) : null;
+  });
 
   useEffect(() => {
     setAnimate(false);
@@ -27,7 +30,9 @@ const MOHLayout = ({ children }) => {
         try {
           const docSnap = await getDoc(doc(db, "moh_admins", user.uid));
           if (docSnap.exists()) {
-            setAdminProfile(docSnap.data());
+            const data = docSnap.data();
+            setAdminProfile(data);
+            sessionStorage.setItem('mohAdminProfile', JSON.stringify(data));
           }
         } catch (err) {
           console.error("Error loading MOH profile in layout:", err);
@@ -40,6 +45,7 @@ const MOHLayout = ({ children }) => {
   const confirmLogout = async () => {
     try {
       await signOut(auth);
+      sessionStorage.removeItem('mohAdminProfile');
       navigate('/login');
     } catch (error) {
       console.error("Logout error:", error);

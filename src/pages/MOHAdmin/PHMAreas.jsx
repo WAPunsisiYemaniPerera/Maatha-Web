@@ -305,7 +305,7 @@ const PHMAreas = () => {
         )}
 
         {/* Executive Header Hero Banner */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-teal-900 via-emerald-950 to-slate-950 text-white shadow-xl p-6 sm:p-8 border border-emerald-800/40">
+        <div className="relative overflow-hidden rounded-3xl bg-teal-950 text-white shadow-xl p-6 sm:p-8 border border-emerald-800/40">
           <div className="absolute top-0 right-0 -mr-16 -mt-16 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
 
           <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -476,7 +476,7 @@ const PHMAreas = () => {
                 <button
                   type="submit"
                   disabled={formLoading}
-                  className="px-6 py-3 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white rounded-2xl text-xs sm:text-sm font-black uppercase tracking-wider shadow-lg shadow-emerald-950/20 transition-all flex items-center gap-2 active:scale-95 disabled:opacity-50"
+                  className="px-6 py-3 bg-teal-600 hover:bg-teal-500 text-white rounded-2xl text-xs sm:text-sm font-black uppercase tracking-wider shadow-lg shadow-emerald-950/20 transition-all flex items-center gap-2 active:scale-95 disabled:opacity-50"
                 >
                   <span>{formLoading ? '⏳ සුරකිමින්...' : (editingId ? '💾 යාවත්කාලීන කරන්න (Update Area)' : '➕ කොට්ඨාසය එක් කරන්න (Add Area)')}</span>
                 </button>

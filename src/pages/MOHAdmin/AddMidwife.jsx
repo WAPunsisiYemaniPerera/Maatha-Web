@@ -600,7 +600,7 @@ const AddMidwife = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-5 bg-gradient-to-br from-slate-50 to-emerald-50/30 rounded-3xl border border-emerald-100/80">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-5 bg-slate-50 rounded-3xl border border-emerald-100/80">
                 {/* Official Login Email */}
                 <div>
                   <label className="block text-xs font-black text-slate-700 mb-1.5 uppercase tracking-wider">
@@ -654,7 +654,7 @@ const AddMidwife = () => {
               <button 
                 type="submit" 
                 disabled={loading} 
-                className="flex-1 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-black py-4 rounded-2xl shadow-lg shadow-emerald-950/20 active:scale-98 transition-all uppercase tracking-wider text-xs sm:text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                className="flex-1 bg-teal-600 hover:bg-teal-500 text-white font-black py-4 rounded-2xl shadow-lg shadow-emerald-950/20 active:scale-98 transition-all uppercase tracking-wider text-xs sm:text-sm flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {loading ? "ක්‍රියාත්මක වෙමින්... (Processing)" : (editingId ? "💾 යාවත්කාලීන කරන්න (Update Details)" : "➕ නිලධාරිනිය පද්ධතියට එක් කරන්න (Register Midwife)")}
               </button>

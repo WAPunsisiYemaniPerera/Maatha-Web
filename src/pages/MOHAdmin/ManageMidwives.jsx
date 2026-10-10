@@ -114,7 +114,7 @@ const ManageMidwives = () => {
           <div className="fixed inset-0 z-[9999] overflow-y-auto bg-blue-950/70 backdrop-blur-md p-3 sm:p-6 flex min-h-screen items-center justify-center animate-in fade-in duration-200">
             <div className="fixed inset-0" onClick={() => setSelectedMidwife(null)} aria-hidden="true" />
             <div className="relative bg-white rounded-3xl max-w-xl w-full shadow-2xl overflow-hidden border border-gray-100 flex flex-col max-h-[88vh] z-10 my-auto animate-in zoom-in-95 duration-200">
-              <div className="bg-gradient-to-r from-teal-700 to-emerald-800 p-6 text-white relative shrink-0">
+              <div className="bg-teal-700 p-6 text-white relative shrink-0">
                 <button 
                   onClick={() => setSelectedMidwife(null)}
                   className="absolute top-5 right-5 text-white/80 hover:text-white bg-black/20 hover:bg-black/40 rounded-full p-2 transition-all"

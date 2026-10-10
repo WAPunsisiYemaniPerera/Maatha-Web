@@ -146,7 +146,7 @@ const MOHDashboard = () => {
     <MOHLayout>
       <div className="space-y-8 max-w-7xl mx-auto">
         {/* Executive Medical Officer Banner */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-800 via-teal-800 to-slate-900 text-white shadow-xl p-8 border border-emerald-700/30">
+        <div className="relative overflow-hidden rounded-3xl bg-teal-900 text-white shadow-xl p-8 border border-emerald-700/30">
           <div className="absolute top-0 right-0 -mr-16 -mt-16 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
           <div className="absolute bottom-0 left-1/3 -mb-16 w-60 h-60 rounded-full bg-teal-400/10 blur-2xl pointer-events-none"></div>
 
@@ -369,7 +369,7 @@ const MOHDashboard = () => {
                       </div>
                       <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-700"
+                          className="h-full bg-teal-500 rounded-full transition-all duration-700"
                           style={{ width: `${barWidth}%` }}
                         ></div>
                       </div>

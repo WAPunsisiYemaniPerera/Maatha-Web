@@ -280,7 +280,7 @@ const MOHReports = () => {
         )}
 
         {/* Executive Header Hero Banner */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-teal-900 via-emerald-950 to-slate-950 text-white shadow-xl p-6 sm:p-8 border border-emerald-800/40">
+        <div className="relative overflow-hidden rounded-3xl bg-teal-950 text-white shadow-xl p-6 sm:p-8 border border-emerald-800/40">
           <div className="absolute top-0 right-0 -mr-16 -mt-16 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
 
           <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -463,7 +463,7 @@ const MOHReports = () => {
             <button
               onClick={handleDownloadPDF}
               disabled={generatingPdf}
-              className="px-4 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+              className="px-4 py-2.5 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
             >
               <span>{generatingPdf ? '⏳ Generating...' : '📄 Download PDF'}</span>
             </button>

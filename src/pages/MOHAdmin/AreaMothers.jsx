@@ -120,8 +120,8 @@ const AreaMothers = () => {
               {/* Modal Header */}
               <div className={`p-6 text-white relative shrink-0 ${
                 selectedMother.riskStatus === 'High-Risk' 
-                  ? 'bg-gradient-to-r from-red-700 via-rose-700 to-pink-800' 
-                  : 'bg-gradient-to-r from-emerald-700 via-teal-700 to-cyan-800'
+                  ? 'bg-red-800' 
+                  : 'bg-teal-800'
               }`}>
                 <button 
                   onClick={() => setSelectedMother(null)}
